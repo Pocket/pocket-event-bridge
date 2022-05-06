@@ -1,0 +1,30 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: "pocket_event_bridge"
+  description: "repository that contains pocket shared event bus, and the event-rules associated with it"
+  annotations:
+    github.com/project-slug: pocket/"pocket_event_bridge"
+    github.com/team-slug: "backend"
+    circleci.com/project-slug: github/pocket/"pocket_event_bridge"
+    sentry.io/project-slug: "pocket_event_bridge"
+spec:
+  type: service
+  owner: backend
+  lifecycle: production
+  providesApis:
+    - "pocket_event_bridge"
+
+---
+
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: "pocket_event_bridge"
+  description: "repository that contains pocket shared event bus, and the event-rules associated with it"
+spec:
+  type: graphql
+  owner: backend
+  definition: |
+    query {}
+  lifecycle: production
