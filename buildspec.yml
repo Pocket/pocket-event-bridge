@@ -45,6 +45,7 @@ phases:
       - echo "//npm.pkg.github.com/:_authToken=${GITHUB_ACCESS_TOKEN}" > ~/.npmrc
       - echo Setting environment variables
       - cd .aws
+      - aws sts-get-caller-identity
 
       # Until we use a docker image with tfenv built in lets install it.
       # This lets us store the needed terraform verison in the source and not rely on changing amazon values.
