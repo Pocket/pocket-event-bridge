@@ -3,9 +3,9 @@ import { Resource } from 'cdktf';
 import {
   PocketEventBridgeProps,
   PocketEventBridgeRuleWithMultipleTargets,
+  ApplicationEventBus
 } from '@pocket-tools/terraform-modules';
 import { config } from '../../config';
-import { ApplicationEventBus } from '@pocket-tools/terraform-modules/dist/base/ApplicationEventBus';
 import { iam, sns, sqs } from '@cdktf/provider-aws';
 import { eventConfig } from './eventConfig';
 
@@ -26,6 +26,8 @@ export class UserApiEvents extends Resource {
   }
 
   /**
+   * Rolls out event bridge rule and attaches them to sns target
+   * for user-events
    * @private
    */
   private createUserEventRules(snsTopic: sns.SnsTopic) {

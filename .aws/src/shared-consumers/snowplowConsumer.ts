@@ -1,12 +1,13 @@
 import { Resource } from 'cdktf';
 import { Construct } from 'constructs';
 import {
+  ApplicationSqsSnsTopicSubscription,
   LAMBDA_RUNTIMES,
   PocketSQSWithLambdaTarget,
-  PocketVPC,
+  PocketVPC
 } from '@pocket-tools/terraform-modules';
 import { config } from '../config';
-import { sns, sqs, iam } from '@cdktf/provider-aws';
+import { sns,sqs } from '@cdktf/provider-aws';
 
 export class SnowplowConsumer extends Resource {
   constructor(scope: Construct, private name: string, private vpc: PocketVPC) {
@@ -18,28 +19,18 @@ export class SnowplowConsumer extends Resource {
       name: `${config.prefix}-UserEventTopic`,
     });
 
-    const snsTopicDlq = new sqs.SqsQueue(this, 'sns-topic-dql', {
-      name: `${config.prefix}-SNS-Topic-DLQ`,
+    new ApplicationSqsSnsTopicSubscription(this,'snowplow-sns-subscription',{
+      name: config.prefix,
+      snsTopicArn : snsTopic.arn,
+      sqsQueue: lambda.sqsQueueResource,
       tags: config.tags,
+      dependsOn: [lambda.sqsQueueResource as sqs.SqsQueue]
     });
-
-    new sns.SnsTopicSubscription(this, 'user-events-subscription', {
-      topicArn: snsTopic.arn,
-      protocol: 'sqs',
-      endpoint: lambda.sqsQueueResource.arn,
-      redrivePolicy: JSON.stringify({
-        deadLetterTargetArn: snsTopicDlq.arn,
-      }),
-    });
-
-    this.createPoliciesForSnsToSQS(
-      snsTopic.arn,
-      lambda.sqsQueueResource,
-      snsTopicDlq
-    );
   }
 
   /**
+   * Rolls out a snowplow lambda.
+   * can be used to add shared snowplow event emission logic based on events from sns
    * @private
    */
   private createSnowplowSnsSubscriberLambda() {
@@ -59,59 +50,6 @@ export class SnowplowConsumer extends Resource {
         },
       },
       tags: config.tags,
-    });
-  }
-
-  /**
-   * @param snsTopicArn
-   * @param lambdaSqsQueue
-   * @param snsTopicDlq
-   * @private
-   */
-  private createPoliciesForSnsToSQS(
-    snsTopicArn: string,
-    lambdaSqsQueue: sqs.SqsQueue | sqs.DataAwsSqsQueue,
-    snsTopicDlq: sqs.SqsQueue | sqs.DataAwsSqsQueue
-  ) {
-    [
-      { name: 'SNS-SQS', resource: lambdaSqsQueue },
-      { name: 'SNS-DLQ', resource: snsTopicDlq },
-    ].forEach((queue) => {
-      const policy = new iam.DataAwsIamPolicyDocument(
-        this,
-        `${config.prefix}-${queue.name}-Policy`,
-        {
-          statement: [
-            {
-              effect: 'Allow',
-              actions: ['sqs:SendMessage'],
-              resources: [queue.resource.arn],
-              principals: [
-                {
-                  identifiers: ['sns.amazonaws.com'],
-                  type: 'Service',
-                },
-              ],
-              condition: [
-                {
-                  test: 'ArnEquals',
-                  variable: 'aws:SourceArn',
-                  values: [snsTopicArn],
-                },
-              ],
-            },
-          ],
-        }
-      ).json;
-
-      new sqs.SqsQueuePolicy(
-        this,
-        `snowplow-${queue.name.toLowerCase()}-policy`,
-        {
-          queueUrl: queue.resource.url,
-          policy: policy,
-        }
-      );
     });
   }
 }
