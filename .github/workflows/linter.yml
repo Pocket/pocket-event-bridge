@@ -92,3 +92,6 @@ jobs:
 
           # Flag to enable or disable the linting process of the YAML language.
           VALIDATE_YAML: true
+
+          #exclude schemaRegistry folder - copied from AWS console
+          FILTER_REGEX_EXCLUDE: "*schemaRegistry*"

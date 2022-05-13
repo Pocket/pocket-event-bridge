@@ -8,9 +8,6 @@ while [[ "$1" ]]; do
       --hosts)
           "${dir}"/setup_hosts.sh
           ;;
-      --db)
-          "${dir}"/setup_db.sh
-          ;;
     esac
     shift
 done
