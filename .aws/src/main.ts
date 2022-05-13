@@ -1,8 +1,6 @@
 import { Construct } from 'constructs';
 import { App, RemoteBackend, TerraformStack } from 'cdktf';
 import { AwsProvider } from '@cdktf/provider-aws';
-import { config } from './config';
-
 import { PagerdutyProvider } from '@cdktf/provider-pagerduty';
 import { LocalProvider } from '@cdktf/provider-local';
 import { NullProvider } from '@cdktf/provider-null';
@@ -14,6 +12,7 @@ import { UserApiEvents } from './event-rules/user-api-events/userApiEventRules';
 import { SnowplowConsumer } from './shared-consumers/snowplowConsumer';
 import { PocketVPC } from '@pocket-tools/terraform-modules';
 import { ArchiveProvider } from '@cdktf/provider-archive';
+import { config } from './config';
 
 class PocketEventBus extends TerraformStack {
   constructor(scope: Construct, name: string) {
@@ -49,5 +48,5 @@ class PocketEventBus extends TerraformStack {
 }
 
 const app = new App();
-new PocketEventBus(app, config.domainPrefix);
+new PocketEventBus(app, config.nameLower);
 app.synth();

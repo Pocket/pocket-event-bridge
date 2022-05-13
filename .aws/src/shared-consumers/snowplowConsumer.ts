@@ -1,7 +1,6 @@
 import { Resource } from 'cdktf';
 import { Construct } from 'constructs';
 import {
-  ApplicationSQSQueue,
   LAMBDA_RUNTIMES,
   PocketSQSWithLambdaTarget,
   PocketVPC,
@@ -21,6 +20,7 @@ export class SnowplowConsumer extends Resource {
 
     const snsTopicDlq = new sqs.SqsQueue(this, 'sns-topic-dql', {
       name: `${config.prefix}-SNS-Topic-DLQ`,
+      tags: config.tags,
     });
 
     new sns.SnsTopicSubscription(this, 'user-events-subscription', {
@@ -58,6 +58,7 @@ export class SnowplowConsumer extends Resource {
           subnetIds: this.vpc.privateSubnetIds,
         },
       },
+      tags: config.tags,
     });
   }
 

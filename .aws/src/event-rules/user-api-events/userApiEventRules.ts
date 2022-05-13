@@ -1,5 +1,5 @@
 import { Construct } from 'constructs';
-import { Resource, TerraformResource } from 'cdktf';
+import { Resource } from 'cdktf';
 import {
   PocketEventBridgeProps,
   PocketEventBridgeRuleWithMultipleTargets,
@@ -31,6 +31,7 @@ export class UserApiEvents extends Resource {
   private createUserEventRules(snsTopic: sns.SnsTopic) {
     const snsTopicDlq = new sqs.SqsQueue(this, 'sns-topic-dql', {
       name: `${config.prefix}-SNS-Topic-Event-Rule-DLQ`,
+      tags: config.tags,
     });
 
     const userEventRuleProps: PocketEventBridgeProps = {
