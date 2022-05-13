@@ -1,4 +1,4 @@
 export const eventConfig = {
   source: 'user-events',
-  detailType: ['user-delete-event'],
+  detailType: ['account-deletion'],
 };

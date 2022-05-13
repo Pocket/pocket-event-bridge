@@ -5,9 +5,7 @@ import {
   RemoteBackend,
   TerraformStack,
 } from 'cdktf';
-import {
-  AwsProvider,
-} from '@cdktf/provider-aws';
+import { AwsProvider } from '@cdktf/provider-aws';
 import { config } from './config';
 
 import { PagerdutyProvider } from '@cdktf/provider-pagerduty';
@@ -15,9 +13,12 @@ import { LocalProvider } from '@cdktf/provider-local';
 import { NullProvider } from '@cdktf/provider-null';
 import {
   ApplicationEventBus,
-  ApplicationEventBusProps
+  ApplicationEventBusProps,
 } from '@pocket-tools/terraform-modules/dist/base/ApplicationEventBus';
-import { UserApiEvents } from './user-api-events/user-api-event-rules';
+import { UserApiEvents } from './event-rules/user-api-events/userApiEventRules';
+import { SnowplowConsumer } from './shared-consumers/snowplowConsumer';
+import { PocketVPC } from '@pocket-tools/terraform-modules';
+import { ArchiveProvider } from '@cdktf/provider-archive';
 
 class PocketEventBus extends TerraformStack {
   constructor(scope: Construct, name: string) {
@@ -27,6 +28,7 @@ class PocketEventBus extends TerraformStack {
     new PagerdutyProvider(this, 'pagerduty_provider', { token: undefined });
     new LocalProvider(this, 'local_provider');
     new NullProvider(this, 'null_provider');
+    new ArchiveProvider(this, 'archive_provider');
 
     new RemoteBackend(this, {
       hostname: 'app.terraform.io',
@@ -39,13 +41,18 @@ class PocketEventBus extends TerraformStack {
       tags: { service: config.prefix },
     };
 
-    const sharedPocketEventBus = new ApplicationEventBus(this,'shared-event-bus', eventBusProps);
-    new UserApiEvents(this,'user-api-events',sharedPocketEventBus);
+    const sharedPocketEventBus = new ApplicationEventBus(
+      this,
+      'shared-event-bus',
+      eventBusProps
+    );
 
+    const pocketVpc = new PocketVPC(this, 'pocket-vpc');
+    new UserApiEvents(this, 'user-api-events', sharedPocketEventBus);
+    new SnowplowConsumer(this, 'pocket-snowplow-consumer', pocketVpc);
   }
 }
 
 const app = new App();
 new PocketEventBus(app, config.domainPrefix);
 app.synth();
-
