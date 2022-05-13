@@ -1,10 +1,5 @@
 import { Construct } from 'constructs';
-import {
-  App,
-  DataTerraformRemoteState,
-  RemoteBackend,
-  TerraformStack,
-} from 'cdktf';
+import { App, RemoteBackend, TerraformStack } from 'cdktf';
 import { AwsProvider } from '@cdktf/provider-aws';
 import { config } from './config';
 
@@ -37,7 +32,7 @@ class PocketEventBus extends TerraformStack {
     });
 
     const eventBusProps: ApplicationEventBusProps = {
-      name: `${config.prefix}-shared-event-bus`,
+      name: `${config.prefix}-Shared-Event-Bus`,
       tags: { service: config.prefix },
     };
 
