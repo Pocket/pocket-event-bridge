@@ -13,6 +13,7 @@ import { SnowplowConsumer } from './shared-consumers/snowplowConsumer';
 import { PocketVPC } from '@pocket-tools/terraform-modules';
 import { ArchiveProvider } from '@cdktf/provider-archive';
 import { config } from './config';
+import { UserEventsSchema } from './events-schema/userEvents';
 
 class PocketEventBus extends TerraformStack {
   constructor(scope: Construct, name: string) {
@@ -44,6 +45,7 @@ class PocketEventBus extends TerraformStack {
     const pocketVpc = new PocketVPC(this, 'pocket-vpc');
     new UserApiEvents(this, 'user-api-events', sharedPocketEventBus);
     new SnowplowConsumer(this, 'pocket-snowplow-consumer', pocketVpc);
+    new UserEventsSchema(this,'user-events');
   }
 }
 
