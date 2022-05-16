@@ -3,13 +3,15 @@ import { Resource } from 'cdktf';
 import {
   PocketEventBridgeProps,
   PocketEventBridgeRuleWithMultipleTargets,
-  ApplicationEventBus
+  ApplicationEventBus,
 } from '@pocket-tools/terraform-modules';
 import { config } from '../../config';
 import { iam, sns, sqs } from '@cdktf/provider-aws';
 import { eventConfig } from './eventConfig';
 
 export class UserApiEvents extends Resource {
+  public readonly snsTopic: sns.SnsTopic;
+
   constructor(
     scope: Construct,
     private name: string,
@@ -17,12 +19,12 @@ export class UserApiEvents extends Resource {
   ) {
     super(scope, name);
 
-    const snsTopic = new sns.SnsTopic(this, 'user-event-topic', {
+    this.snsTopic = new sns.SnsTopic(this, 'user-event-topic', {
       name: `${config.prefix}-UserEventTopic`,
     });
 
-    this.createUserEventRules(snsTopic);
-    this.createPolicyForEventBridgeToSns(snsTopic.arn);
+    this.createUserEventRules();
+    this.createPolicyForEventBridgeToSns();
   }
 
   /**
@@ -30,7 +32,7 @@ export class UserApiEvents extends Resource {
    * for user-events
    * @private
    */
-  private createUserEventRules(snsTopic: sns.SnsTopic) {
+  private createUserEventRules() {
     const snsTopicDlq = new sqs.SqsQueue(this, 'sns-topic-dql', {
       name: `${config.prefix}-SNS-Topic-Event-Rule-DLQ`,
       tags: config.tags,
@@ -47,10 +49,10 @@ export class UserApiEvents extends Resource {
       },
       targets: [
         {
-          arn: snsTopic.arn,
+          arn: this.snsTopic.arn,
           deadLetterArn: snsTopicDlq.arn,
           targetId: `${config.prefix}-User-Event-SNS-Target`,
-          terraformResource: snsTopic,
+          terraformResource: this.snsTopic,
         },
       ],
     };
@@ -62,7 +64,7 @@ export class UserApiEvents extends Resource {
     );
   }
 
-  private createPolicyForEventBridgeToSns(snsTopicArn: string) {
+  private createPolicyForEventBridgeToSns() {
     const eventBridgeSnsPolicy = new iam.DataAwsIamPolicyDocument(
       this,
       `${config.prefix}-EventBridge-SNS-Policy`,
@@ -71,7 +73,7 @@ export class UserApiEvents extends Resource {
           {
             effect: 'Allow',
             actions: ['sns:Publish'],
-            resources: [snsTopicArn],
+            resources: [this.snsTopic.arn],
             principals: [
               {
                 identifiers: ['events.amazonaws.com'],
@@ -84,7 +86,7 @@ export class UserApiEvents extends Resource {
     ).json;
 
     return new sns.SnsTopicPolicy(this, 'user-events-sns-topic-policy', {
-      arn: snsTopicArn,
+      arn: this.snsTopic.arn,
       policy: eventBridgeSnsPolicy,
     });
   }

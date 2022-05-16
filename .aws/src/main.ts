@@ -42,8 +42,17 @@ class PocketEventBus extends TerraformStack {
     );
 
     const pocketVpc = new PocketVPC(this, 'pocket-vpc');
-    new UserApiEvents(this, 'user-api-events', sharedPocketEventBus);
-    new SnowplowConsumer(this, 'pocket-snowplow-consumer', pocketVpc);
+    const userEvents = new UserApiEvents(
+      this,
+      'user-api-events',
+      sharedPocketEventBus
+    );
+    new SnowplowConsumer(
+      this,
+      'pocket-snowplow-consumer',
+      pocketVpc,
+      userEvents.snsTopic
+    );
   }
 }
 

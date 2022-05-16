@@ -4,27 +4,28 @@ import {
   ApplicationSqsSnsTopicSubscription,
   LAMBDA_RUNTIMES,
   PocketSQSWithLambdaTarget,
-  PocketVPC
+  PocketVPC,
 } from '@pocket-tools/terraform-modules';
 import { config } from '../config';
-import { sns,sqs } from '@cdktf/provider-aws';
+import { sns, sqs } from '@cdktf/provider-aws';
 
 export class SnowplowConsumer extends Resource {
-  constructor(scope: Construct, private name: string, private vpc: PocketVPC) {
+  constructor(
+    scope: Construct,
+    private name: string,
+    private vpc: PocketVPC,
+    private snsTopic
+  ) {
     super(scope, name);
 
     const lambda = this.createSnowplowSnsSubscriberLambda();
 
-    const snsTopic = new sns.DataAwsSnsTopic(this, 'user-events-sns', {
-      name: `${config.prefix}-UserEventTopic`,
-    });
-
-    new ApplicationSqsSnsTopicSubscription(this,'snowplow-sns-subscription',{
+    new ApplicationSqsSnsTopicSubscription(this, 'snowplow-sns-subscription', {
       name: config.prefix,
-      snsTopicArn : snsTopic.arn,
+      snsTopicArn: snsTopic.arn,
       sqsQueue: lambda.sqsQueueResource,
       tags: config.tags,
-      dependsOn: [lambda.sqsQueueResource as sqs.SqsQueue]
+      dependsOn: [lambda.sqsQueueResource as sqs.SqsQueue],
     });
   }
 
