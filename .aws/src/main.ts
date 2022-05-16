@@ -7,7 +7,10 @@ import { NullProvider } from '@cdktf/provider-null';
 import {
   ApplicationEventBus,
   ApplicationEventBusProps,
-} from '@pocket-tools/terraform-modules/dist/base/ApplicationEventBus';
+} from '@pocket-tools/terraform-modules';
+import { UserApiEvents } from './event-rules/user-api-events/userApiEventRules';
+import { SnowplowConsumer } from './shared-consumers/snowplowConsumer';
+import { PocketVPC } from '@pocket-tools/terraform-modules';
 import { ArchiveProvider } from '@cdktf/provider-archive';
 import { config } from './config';
 
@@ -32,7 +35,15 @@ class PocketEventBus extends TerraformStack {
       tags: { service: config.prefix },
     };
 
-    new ApplicationEventBus(this, 'shared-event-bus', eventBusProps);
+    const sharedPocketEventBus = new ApplicationEventBus(
+      this,
+      'shared-event-bus',
+      eventBusProps
+    );
+
+    const pocketVpc = new PocketVPC(this, 'pocket-vpc');
+    new UserApiEvents(this, 'user-api-events', sharedPocketEventBus);
+    new SnowplowConsumer(this, 'pocket-snowplow-consumer', pocketVpc);
   }
 }
 
