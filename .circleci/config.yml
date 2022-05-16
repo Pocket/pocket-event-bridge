@@ -2,7 +2,7 @@ version: 2.1
 
 orbs:
   aws-cli: circleci/aws-cli@1.2.1
-  pocket: pocket/circleci-orbs@dev:9c62281
+  pocket: pocket/circleci-orbs@1.2.6
 
 # Workflow shortcuts
 not_main: &not_main
