@@ -2,7 +2,7 @@ version: 2.1
 
 orbs:
   aws-cli: circleci/aws-cli@1.2.1
-  pocket: pocket/circleci-orbs@1.2.4
+  pocket: pocket/circleci-orbs@dev:9c62281
 
 # Workflow shortcuts
 not_main: &not_main
@@ -43,83 +43,28 @@ only_dev: &only_dev
       only:
         - dev
 
-jobs:
-  run_code_build:
-    description: run codebuild to apply infrastructure
-    parameters:
-      env_lower_name:
-        type: string
-        description: The lower case env name
-      env_capital_name:
-        description: The env capital name
-        type: string
-      codebuild_project_name:
-        type: string
-        description: The CodeBuild project name
-        default: ""
-      codebuild_project_branch:
-        type: string
-        description: The git branch to build
-        default: ""
-    docker:
-      - image: circleci/node:16
-        auth:
-          username: $DOCKERHUB_USERNAME
-          password: $DOCKERHUB_PASSWORD
-    steps:
-      - aws-cli/setup:
-          aws-access-key-id: << parameters.env_capital_name >>_AWS_ACCESS_KEY
-          aws-secret-access-key: << parameters.env_capital_name >>_AWS_SECRET_ACCESS_KEY
-          aws-region: << parameters.env_capital_name >>_AWS_DEFAULT_REGION
-      - run:
-          name: Setup CodeBuild environment variables
-          command: |
-            { \
-            echo 'export CODEBUILD_PROJECT_NAME="<< parameters.codebuild_project_name >>"'; \
-            echo 'export CODEBUILD_PROJECT_BRANCH="<< parameters.codebuild_project_branch >>"'; \
-            } >> "$BASH_ENV"
-      - run:
-          name: Run CodeBuild
-          command: |
-            echo -e "Starting CodeBuild for ${CODEBUILD_PROJECT_NAME}.\n"
-            BUILD_ID=$(aws codebuild start-build --project-name "$CODEBUILD_PROJECT_NAME" --environment-variables-override name=GIT_BRANCH,value="$CODEBUILD_PROJECT_BRANCH" --source-version "$CODEBUILD_PROJECT_BRANCH" --query 'build.id' --output text)
-            BUILD_STATUS="IN_PROGRESS"
-            # Wait for the CodeBuild to complete.
-            while [ "$BUILD_STATUS" == "IN_PROGRESS" ]; do
-              sleep 10
-              echo "Checking build status"
-              BUILD_STATUS=$(aws codebuild batch-get-builds --ids "$BUILD_ID" --query 'builds[0].buildStatus' --output text)
-              if [ "$BUILD_STATUS" == "IN_PROGRESS" ]; then
-                echo -e "Build is ${BUILD_STATUS}, waiting for build to complete...waiting for 10 seconds before next check...\n"
-              fi
-            done
-            if [ "$BUILD_STATUS" != "SUCCEEDED" ]; then
-              echo "CodeBuild failed to succeed with status ${BUILD_STATUS}"
-              exit 1
-            else
-              echo -e "CodeBuild succeeded\n"
-            fi
-
 workflows:
   all:
     jobs:
-      - run_code_build:
+      - pocket/run_codebuild:
           <<: *only_dev
           context: pocket
+          aws-access-key-id: Dev_AWS_ACCESS_KEY
+          aws-secret-access-key: Dev_AWS_SECRET_ACCESS_KEY
+          aws-region: Dev_AWS_DEFAULT_REGION
           name: run_dev_code_build
-          codebuild_project_name: PocketEventBridge-Dev
-          codebuild_project_branch: dev
-          env_lower_name: dev
-          env_capital_name: Dev
+          codebuild-project-name: PocketEventBridge-Dev
+          codebuild-project-branch: dev
 
-      - run_code_build:
+      - pocket/run_codebuild:
           <<: *only_main
           context: pocket
+          aws-access-key-id: Prod_AWS_ACCESS_KEY
+          aws-secret-access-key: Prod_AWS_SECRET_ACCESS_KEY
+          aws-region: Prod_AWS_DEFAULT_REGION
           name: run_prod_code_build
-          codebuild_project_name: PocketEventBridge-Prod
-          codebuild_project_branch: main
-          env_lower_name: prod
-          env_capital_name: Prod
+          codebuild-project-name: PocketEventBridge-Prod
+          codebuild-project-branch: main
 
       # Notify sentry of main deployment
       - pocket/sentry_release_notification:
