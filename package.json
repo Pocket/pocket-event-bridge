@@ -27,7 +27,7 @@
   "homepage": "https://github.com/Pocketpocket_event_bridge#readme",
   "devDependencies": {
     "@pocket-tools/eslint-config": "1.1.0",
-    "@pocket-tools/tsconfig": "1.0.1",
+    "@pocket-tools/tsconfig": "1.0.2",
     "@types/chai": "4.3.1",
     "@types/jest": "^27.4.0",
     "chai": "^4.3.6",
