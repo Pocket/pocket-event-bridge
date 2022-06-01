@@ -7,12 +7,13 @@ import { NullProvider } from '@cdktf/provider-null';
 import {
   ApplicationEventBus,
   ApplicationEventBusProps,
-} from '@pocket-tools/terraform-modules';
+} from '@pocket-tools/terraform-modules/dist/base/ApplicationEventBus';
 import { UserApiEvents } from './event-rules/user-api-events/userApiEventRules';
 import { SnowplowConsumer } from './shared-consumers/snowplowConsumer';
 import { PocketVPC } from '@pocket-tools/terraform-modules';
 import { ArchiveProvider } from '@cdktf/provider-archive';
 import { config } from './config';
+import { UserEventsSchema } from './events-schema/userEvents';
 
 class PocketEventBus extends TerraformStack {
   constructor(scope: Construct, name: string) {
