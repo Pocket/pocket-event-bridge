@@ -4,13 +4,24 @@ import {
   PocketEventBridgeProps,
   PocketEventBridgeRuleWithMultipleTargets,
   ApplicationEventBus,
+  PocketEventBridgeTargets,
 } from '@pocket-tools/terraform-modules';
 import { config } from '../../config';
 import { iam, sns, sqs } from '@cdktf/provider-aws';
 import { eventConfig } from './eventConfig';
 
 /**
- * Event bus rules to send ML-generated prospects to a pre-existing SQS queue
+ * Purpose:
+ * 
+ * The purpose of this rule set is to send ML-generated prospects to two
+ * separate systems:
+ * 
+ * 1. A pre-existing production SQS queue that is consumed by a lambda which
+ * feeds those prospects to the curation admin tool.
+ * 
+ * 2. The dev instance of this event bridge
+ * 
+ * Note that this class is only instantiated in the production environment!
  */
 export class ProspectEvents extends Resource {
   public readonly snsTopic: sns.SnsTopic;
@@ -25,8 +36,8 @@ export class ProspectEvents extends Resource {
     super(scope, name);
 
     // pre-existing queues created by prospect-api
-    this.sqs = new sqs.SqsQueue(this, 'ProspectAPI-Prod-Sqs-Translation-Queue');
-    this.sqsDlq = new sqs.SqsQueue(this, 'ProspectAPI-Prod-Sqs-Translation-Queue-Deadletter');
+    this.sqs = new sqs.SqsQueue(this, `ProspectAPI-${config.environment}-Sqs-Translation-Queue`);
+    this.sqsDlq = new sqs.SqsQueue(this, `ProspectAPI-${config.environment}-Sqs-Translation-Queue-Deadletter`);
 
     this.createProspectEventRules();
     this.createPolicyForEventBridgeToSqs();
@@ -40,6 +51,22 @@ export class ProspectEvents extends Resource {
    * @private
    */
   private createProspectEventRules() {
+    // both prod and dev have an sqs target
+    const targets: PocketEventBridgeTargets[] = [
+      {
+          arn: this.sqs.arn,
+          deadLetterArn: this.sqsDlq.arn,
+          targetId: `${config.prefix}-Prospect-Event-SQS-Target`,
+          terraformResource: this.sqs,
+        },
+    ];
+
+    // only prod also targets the dev event bridge
+    if (!config.isDev) {
+      // TODO: add dev event bridge target
+      // https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-cross-account.html
+    }
+
     const prospectEventRuleProps: PocketEventBridgeProps = {
       eventRule: {
         name: `${config.prefix}-ProspectEvents-Rule`,
@@ -49,24 +76,12 @@ export class ProspectEvents extends Resource {
         },
         eventBusName: this.sharedEventBus.bus.name,
       },
-      targets: [
-        {
-          arn: this.sqs.arn,
-          deadLetterArn: this.sqsDlq.arn,
-          targetId: `${config.prefix}-Prospect-Event-SQS-Target`,
-          terraformResource: this.sqs,
-        },
-        // TODO: create a target for the dev event bus, which will then send
-        // prospects to the dev SQS
-      ],
+      targets,
     };
 
     new PocketEventBridgeRuleWithMultipleTargets(
       this,
-      // TODO: does the below need to be unique? if so, we need to do a little
-      // refactoring.
-      // TODO: synth the terraform and find out!
-      `${config.prefix}-EventBridge-Rule`,
+      `${config.prefix}-Prospect-Prod-EventBridge-Rule`,
       prospectEventRuleProps
     );
   }

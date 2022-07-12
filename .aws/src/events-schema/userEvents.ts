@@ -4,7 +4,6 @@ import { eventbridgeschemas } from '@cdktf/provider-aws';
 import { SCHEMA_REGISTRY, SCHEMA_TYPE } from './types';
 import { SchemasSchemaConfig } from '@cdktf/provider-aws/lib/eventbridgeschemas/schemas-schema';
 
-
 export class UserEventsSchema extends Resource {
   constructor(
     scope: Construct,
@@ -13,7 +12,6 @@ export class UserEventsSchema extends Resource {
     super(scope, name);
     this.createUserEventsSchema()
   }
-
 
   private createUserEventsSchema() {
     const schemaProps: SchemasSchemaConfig = {

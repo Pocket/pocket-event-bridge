@@ -14,6 +14,7 @@ import { SnowplowConsumer } from './shared-consumers/snowplowConsumer';
 import { PocketVPC } from '@pocket-tools/terraform-modules';
 import { ArchiveProvider } from '@cdktf/provider-archive';
 import { config } from './config';
+import { UserEventsSchema} from './events-schema/userEvents';
 
 class PocketEventBus extends TerraformStack {
   constructor(scope: Construct, name: string) {
@@ -53,6 +54,9 @@ class PocketEventBus extends TerraformStack {
       sharedPocketEventBus
     );
 
+    // publish user api schema to event registry
+    new UserEventsSchema(this, 'user-api-events-schema');
+
     new SnowplowConsumer(
       this,
       'pocket-snowplow-consumer',
@@ -60,12 +64,9 @@ class PocketEventBus extends TerraformStack {
       userEvents.snsTopic
     );
 
-    // prospect events
-    // note that prospect event rules should only exist in prod (as they send)
-    // specifically to the *prod* sqs and the *dev* event bridge
-    if (!config.isDev) {
-      new ProspectEvents(this, 'prospect-events', sharedPocketEventBus);
-    }
+    // prospect events (note that the following behaves differently in prod
+    // versus dev - check the file for more details)
+    new ProspectEvents(this, 'prospect-events', sharedPocketEventBus);
   }
 }
 
