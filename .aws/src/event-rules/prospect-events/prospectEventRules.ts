@@ -61,11 +61,11 @@ export class ProspectEvents extends Resource {
       ],
     };
 
-    // TODO: does this need a return?
-    return new PocketEventBridgeRuleWithMultipleTargets(
+    new PocketEventBridgeRuleWithMultipleTargets(
       this,
       // TODO: does the below need to be unique? if so, we need to do a little
       // refactoring.
+      // TODO: synth the terraform and find out!
       `${config.prefix}-EventBridge-Rule`,
       prospectEventRuleProps
     );
@@ -92,8 +92,7 @@ export class ProspectEvents extends Resource {
       }
     ).json;
 
-    // TODO: do we need a return here?
-    return new sqs.SqsQueuePolicy(this, 'prospect-events-sqs-policy', {
+    new sqs.SqsQueuePolicy(this, 'prospect-events-sqs-policy', {
       policy: eventBridgeSqsPolicy,
       queueUrl: this.sqs.url
     });

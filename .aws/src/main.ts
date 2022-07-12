@@ -14,8 +14,6 @@ import { SnowplowConsumer } from './shared-consumers/snowplowConsumer';
 import { PocketVPC } from '@pocket-tools/terraform-modules';
 import { ArchiveProvider } from '@cdktf/provider-archive';
 import { config } from './config';
-// TODO: the import below isn't used - is that file necessary?
-import { UserEventsSchema } from './events-schema/userEvents';
 
 class PocketEventBus extends TerraformStack {
   constructor(scope: Construct, name: string) {
@@ -63,8 +61,11 @@ class PocketEventBus extends TerraformStack {
     );
 
     // prospect events
-    // TODO: do i need to do anything else here?
-    new ProspectEvents(this, 'prospect-events', sharedPocketEventBus);
+    // note that prospect event rules should only exist in prod (as they send)
+    // specifically to the *prod* sqs and the *dev* event bridge
+    if (!config.isDev) {
+      new ProspectEvents(this, 'prospect-events', sharedPocketEventBus);
+    }
   }
 }
 
