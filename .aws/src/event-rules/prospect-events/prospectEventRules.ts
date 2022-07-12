@@ -36,8 +36,13 @@ export class ProspectEvents extends Resource {
     super(scope, name);
 
     // pre-existing queues created by prospect-api
-    this.sqs = new sqs.SqsQueue(this, `ProspectAPI-${config.environment}-Sqs-Translation-Queue`);
-    this.sqsDlq = new sqs.SqsQueue(this, `ProspectAPI-${config.environment}-Sqs-Translation-Queue-Deadletter`);
+    this.sqs = new sqs.SqsQueue(this, `prospect-${config.environment}-queue`, {
+      name: `ProspectAPI-${config.environment}-Sqs-Translation-Queue`
+    });
+    
+    this.sqsDlq = new sqs.SqsQueue(this, `prospect-${config.environment}-dlq`, {
+      name: `ProspectAPI-${config.environment}-Sqs-Translation-Queue-Deadletter`
+    });
 
     this.createProspectEventRules();
     this.createPolicyForEventBridgeToSqs();
