@@ -25,8 +25,8 @@ import { eventConfig } from './eventConfig';
  */
 export class ProspectEvents extends Resource {
   public readonly snsTopic: sns.SnsTopic;
-  public readonly sqs: sqs.SqsQueue;
-  public readonly sqsDlq: sqs.SqsQueue;
+  public readonly sqs: sqs.DataAwsSqsQueue;
+  public readonly sqsDlq: sqs.DataAwsSqsQueue;
 
   constructor(
     scope: Construct,
@@ -36,11 +36,11 @@ export class ProspectEvents extends Resource {
     super(scope, name);
 
     // pre-existing queues created by prospect-api
-    this.sqs = new sqs.SqsQueue(this, `prospect-${config.environment}-queue`, {
+    this.sqs = new sqs.DataAwsSqsQueue(this, `prospect-${config.environment}-queue`, {
       name: `ProspectAPI-${config.environment}-Sqs-Translation-Queue`
-    });
-    
-    this.sqsDlq = new sqs.SqsQueue(this, `prospect-${config.environment}-dlq`, {
+    })
+
+    this.sqsDlq = new sqs.DataAwsSqsQueue(this, `prospect-${config.environment}-dlq`, {
       name: `ProspectAPI-${config.environment}-Sqs-Translation-Queue-Deadletter`
     });
 
@@ -62,7 +62,6 @@ export class ProspectEvents extends Resource {
           arn: this.sqs.arn,
           deadLetterArn: this.sqsDlq.arn,
           targetId: `${config.prefix}-Prospect-Event-SQS-Target`,
-          terraformResource: this.sqs,
         },
     ];
 
