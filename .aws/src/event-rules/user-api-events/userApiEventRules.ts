@@ -43,7 +43,7 @@ export class UserApiEvents extends Resource {
         name: `${config.prefix}-UserEvents-Rule`,
         pattern: {
           source: [eventConfig.source],
-          'detail-type': [...eventConfig.detailType],
+          'detail-type': eventConfig.detailType,
         },
         eventBusName: this.sharedEventBus.bus.name,
       },
@@ -59,7 +59,7 @@ export class UserApiEvents extends Resource {
 
     return new PocketEventBridgeRuleWithMultipleTargets(
       this,
-      `${config.prefix}-EventBridge-Rule`,
+      `${config.prefix}-User-Api-EventBridge-Rule`,
       userEventRuleProps
     );
   }
