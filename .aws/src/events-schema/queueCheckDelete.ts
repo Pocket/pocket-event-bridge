@@ -50,14 +50,13 @@
          "schemas": {
            "Event": {
              "type": "object",
-             "required": [],
              "properties": {
               // Optional for manually generated events, 
               // to put a boundary on what requests we check by date
                "latestRequestDate": {
                  "type": "string",
                  "format": "date"
-               },
+               }
              }
            }
          }
