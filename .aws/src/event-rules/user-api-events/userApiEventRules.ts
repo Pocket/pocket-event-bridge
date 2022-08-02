@@ -41,7 +41,7 @@ export class UserApiEvents extends Resource {
     const userEventRuleProps: PocketEventBridgeProps = {
       eventRule: {
         name: `${config.prefix}-UserEvents-Rule`,
-        pattern: {
+        eventPattern: {
           source: [eventConfig.source],
           'detail-type': eventConfig.detailType,
         },
