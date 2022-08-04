@@ -15,6 +15,8 @@ import { PocketVPC } from '@pocket-tools/terraform-modules';
 import { ArchiveProvider } from '@cdktf/provider-archive';
 import { config } from './config';
 import { UserEventsSchema} from './events-schema/userEvents';
+import { AccountDeleteMonitorEvents } from './event-rules/account-delete-monitor';
+import { QueueCheckDeleteSchema } from './events-schema/queueCheckDelete';
 
 class PocketEventBus extends TerraformStack {
   constructor(scope: Construct, name: string) {
@@ -67,6 +69,10 @@ class PocketEventBus extends TerraformStack {
     // prospect events (note that the following behaves differently in prod
     // versus dev - check the file for more details)
     new ProspectEvents(this, 'prospect-events', sharedPocketEventBus);
+
+    // Events for Account Delete Monitor service
+    new AccountDeleteMonitorEvents(this, 'adm-events');
+    new QueueCheckDeleteSchema(this, 'queue-delete-schema')
   }
 }
 

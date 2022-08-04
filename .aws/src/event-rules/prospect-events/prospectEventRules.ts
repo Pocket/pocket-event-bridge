@@ -77,7 +77,7 @@ export class ProspectEvents extends Resource {
     const prospectEventRuleProps: PocketEventBridgeProps = {
       eventRule: {
         name: `${config.prefix}-ProspectEvents-Rule`,
-        pattern: {
+        eventPattern: {
           source: [eventConfig.source],
           'detail-type': eventConfig.detailType,
         },
