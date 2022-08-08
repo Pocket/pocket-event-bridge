@@ -14,9 +14,10 @@ import { SnowplowConsumer } from './shared-consumers/snowplowConsumer';
 import { PocketVPC } from '@pocket-tools/terraform-modules';
 import { ArchiveProvider } from '@cdktf/provider-archive';
 import { config } from './config';
-import { UserEventsSchema} from './events-schema/userEvents';
+import { UserEventsSchema } from './events-schema/userEvents';
 import { AccountDeleteMonitorEvents } from './event-rules/account-delete-monitor';
 import { QueueCheckDeleteSchema } from './events-schema/queueCheckDelete';
+import { UserMergeEventSchema } from './events-schema/userMergeEvent';
 
 class PocketEventBus extends TerraformStack {
   constructor(scope: Construct, name: string) {
@@ -72,7 +73,8 @@ class PocketEventBus extends TerraformStack {
 
     // Events for Account Delete Monitor service
     new AccountDeleteMonitorEvents(this, 'adm-events');
-    new QueueCheckDeleteSchema(this, 'queue-delete-schema')
+    new QueueCheckDeleteSchema(this, 'queue-delete-schema');
+    new UserMergeEventSchema(this, 'user-merge-event-shema');
   }
 }
 
