@@ -57,9 +57,6 @@ class PocketEventBus extends TerraformStack {
       sharedPocketEventBus
     );
 
-    // publish user api schema to event registry
-    new UserEventsSchema(this, 'user-api-events-schema');
-
     new SnowplowConsumer(
       this,
       'pocket-snowplow-consumer',
@@ -73,6 +70,9 @@ class PocketEventBus extends TerraformStack {
 
     // Events for Account Delete Monitor service
     new AccountDeleteMonitorEvents(this, 'adm-events');
+
+    //Schema
+    new UserEventsSchema(this, 'user-api-events-schema');
     new QueueCheckDeleteSchema(this, 'queue-delete-schema');
     new UserMergeEventSchema(this, 'user-merge-event-shema');
   }
