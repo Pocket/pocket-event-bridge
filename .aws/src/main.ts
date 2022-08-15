@@ -18,6 +18,7 @@ import { UserEventsSchema } from './events-schema/userEvents';
 import { AccountDeleteMonitorEvents } from './event-rules/account-delete-monitor';
 import { QueueCheckDeleteSchema } from './events-schema/queueCheckDelete';
 import { UserMergeEventSchema } from './events-schema/userMergeEvent';
+import { PremiumPurchaseEvent } from './events-schema/premiumPurchaseEvent';
 
 class PocketEventBus extends TerraformStack {
   constructor(scope: Construct, name: string) {
@@ -75,6 +76,7 @@ class PocketEventBus extends TerraformStack {
     new UserEventsSchema(this, 'user-api-events-schema');
     new QueueCheckDeleteSchema(this, 'queue-delete-schema');
     new UserMergeEventSchema(this, 'user-merge-event-shema');
+    new PremiumPurchaseEvent(this, 'premium-purchase-event-schema');
   }
 }
 
