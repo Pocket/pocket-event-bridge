@@ -22,7 +22,7 @@ export class PremiumPurchaseEvent extends Resource {
       description: `emitted when pocket user subscribes for premium account`,
       type: SCHEMA_TYPE,
       registryName: SCHEMA_REGISTRY,
-      content: Fn.jsonencode(this.getPremiumPurchaseEventSchema())
+      content: JSON.stringify(this.getPremiumPurchaseEventSchema())
     };
     const schema = new eventbridgeschemas.SchemasSchema(
       this,
