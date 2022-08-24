@@ -19,6 +19,7 @@ import { AccountDeleteMonitorEvents } from './event-rules/account-delete-monitor
 import { QueueCheckDeleteSchema } from './events-schema/queueCheckDelete';
 import { UserMergeEventSchema } from './events-schema/userMergeEvent';
 import { PremiumPurchaseEvent } from './events-schema/premiumPurchaseEvent';
+import { ForgotPasswordRequestEvent } from './events-schema/ForgotPasswordRequestEvent';
 
 class PocketEventBus extends TerraformStack {
   constructor(scope: Construct, name: string) {
@@ -77,6 +78,10 @@ class PocketEventBus extends TerraformStack {
     new QueueCheckDeleteSchema(this, 'queue-delete-schema');
     new UserMergeEventSchema(this, 'user-merge-event-shema');
     new PremiumPurchaseEvent(this, 'premium-purchase-event-schema');
+    new ForgotPasswordRequestEvent(
+      this,
+      'forgot-password-request-event-schema'
+    );
   }
 }
 
