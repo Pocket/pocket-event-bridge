@@ -9,16 +9,19 @@ import { SCHEMA_REGISTRY, SCHEMA_TYPE } from './types';
 import { SchemasSchemaConfig } from '@cdktf/provider-aws/lib/eventbridgeschemas/schemas-schema';
 
 export class PremiumPurchaseEvent extends Resource {
-  public readonly eventName: string = 'premium-purchase';
+  public readonly premiumPurchaseEvent: string = 'Premium-Purchase';
+  public readonly premiumRenewalUpcomingEvent: string = 'Premium-Renewal-Upcoming';
+
 
   constructor(scope: Construct, private name: string) {
     super(scope, name);
     this.createPremiumPurchaseEvent();
+    this.createPremiumRenewalUpcomingEvent();
   }
 
   private createPremiumPurchaseEvent() {
     const schemaProps: SchemasSchemaConfig = {
-      name: this.eventName,
+      name: this.premiumPurchaseEvent,
       description: `emitted when pocket user subscribes for premium account`,
       type: SCHEMA_TYPE,
       registryName: SCHEMA_REGISTRY,
@@ -26,9 +29,27 @@ export class PremiumPurchaseEvent extends Resource {
     };
     const schema = new eventbridgeschemas.SchemasSchema(
       this,
-      `${this.eventName}-schema`,
+      `${this.premiumPurchaseEvent}-Schema`,
       schemaProps
     );
+
+    return schema;
+  }
+
+  private createPremiumRenewalUpcomingEvent() {
+    const schemaProps: SchemasSchemaConfig = {
+      name: this.premiumRenewalUpcomingEvent,
+      description: `emitted when pocket user subscribes for premium account`,
+      type: SCHEMA_TYPE,
+      registryName: SCHEMA_REGISTRY,
+      content: JSON.stringify(this.getPremiumPurchaseEventSchema())
+    };
+    const schema = new eventbridgeschemas.SchemasSchema(
+      this,
+      `${this.premiumRenewalUpcomingEvent}-Schema`,
+      schemaProps
+    );
+
     return schema;
   }
 
