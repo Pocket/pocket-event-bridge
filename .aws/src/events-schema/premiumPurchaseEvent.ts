@@ -1,34 +1,55 @@
 /**
- * PremiumPurchase event is emitted when a pocket user has subscribed for
- * premium account.
+ * Creates schema for Premium-Purchase event and Premium-Renewal-Upcoming event
+ * Both events share the same payload type
  */
-import { Resource, Fn } from 'cdktf';
+import { Resource } from 'cdktf';
 import { Construct } from 'constructs';
 import { eventbridgeschemas } from '@cdktf/provider-aws';
 import { SCHEMA_REGISTRY, SCHEMA_TYPE } from './types';
 import { SchemasSchemaConfig } from '@cdktf/provider-aws/lib/eventbridgeschemas/schemas-schema';
 
 export class PremiumPurchaseEvent extends Resource {
-  public readonly eventName: string = 'premium-purchase';
+  public readonly premiumPurchaseEvent: string = 'Premium-Purchase';
+  public readonly premiumRenewalUpcomingEvent: string =
+    'Premium-Renewal-Upcoming';
 
   constructor(scope: Construct, private name: string) {
     super(scope, name);
     this.createPremiumPurchaseEvent();
+    this.createPremiumRenewalUpcomingEvent();
   }
 
   private createPremiumPurchaseEvent() {
     const schemaProps: SchemasSchemaConfig = {
-      name: this.eventName,
+      name: this.premiumPurchaseEvent,
       description: `emitted when pocket user subscribes for premium account`,
       type: SCHEMA_TYPE,
       registryName: SCHEMA_REGISTRY,
-      content: JSON.stringify(this.getPremiumPurchaseEventSchema())
+      content: JSON.stringify(this.getPremiumPurchaseEventSchema()),
     };
     const schema = new eventbridgeschemas.SchemasSchema(
       this,
-      `${this.eventName}-schema`,
+      `${this.premiumPurchaseEvent}-Schema`,
       schemaProps
     );
+
+    return schema;
+  }
+
+  private createPremiumRenewalUpcomingEvent() {
+    const schemaProps: SchemasSchemaConfig = {
+      name: this.premiumRenewalUpcomingEvent,
+      description: `emitted when pocket user premium subscription is renewed`,
+      type: SCHEMA_TYPE,
+      registryName: SCHEMA_REGISTRY,
+      content: JSON.stringify(this.getPremiumPurchaseEventSchema()),
+    };
+    const schema = new eventbridgeschemas.SchemasSchema(
+      this,
+      `${this.premiumRenewalUpcomingEvent}-Schema`,
+      schemaProps
+    );
+
     return schema;
   }
 
@@ -37,74 +58,82 @@ export class PremiumPurchaseEvent extends Resource {
    */
   private getPremiumPurchaseEventSchema() {
     return {
-      "openapi": "3.0.0",
-      "info": {
-        "version": "1.0.0",
-        "title": "Event"
+      openapi: '3.0.0',
+      info: {
+        version: '1.0.0',
+        title: 'Event',
       },
-      "paths": {},
-      "components": {
-        "schemas": {
-          "Event": {
-            "type": "object",
-            "required": ["purchase", "user"],
-            "properties": {
-              "purchase": {
-                "$ref": "#/components/schemas/Purchase"
+      paths: {},
+      components: {
+        schemas: {
+          Event: {
+            type: 'object',
+            required: ['purchase', 'user'],
+            properties: {
+              purchase: {
+                $ref: '#/components/schemas/Purchase',
               },
-              "user": {
-                "$ref": "#/components/schemas/User"
-              }
-            }
+              user: {
+                $ref: '#/components/schemas/User',
+              },
+            },
           },
-          "Purchase": {
-            "type": "object",
-            "required": ["amount", "planType", "isFree", "planInterval", "cancelAtPeriodEnd", "isTrial", "receiptId", "renewDate"],
-            "properties": {
-              "amount": {
-                "type": "string"
+          Purchase: {
+            type: 'object',
+            required: [
+              'amount',
+              'planType',
+              'isFree',
+              'planInterval',
+              'cancelAtPeriodEnd',
+              'isTrial',
+              'receiptId',
+              'renewDate',
+            ],
+            properties: {
+              amount: {
+                type: 'string',
               },
-              "cancelAtPeriodEnd": {
-                "type": "boolean"
+              cancelAtPeriodEnd: {
+                type: 'boolean',
               },
-              "isFree": {
-                "type": "boolean"
+              isFree: {
+                type: 'boolean',
               },
-              "isTrial": {
-                "type": "boolean"
+              isTrial: {
+                type: 'boolean',
               },
-              "planInterval": {
-                "type": "string"
+              planInterval: {
+                type: 'string',
               },
-              "planType": {
-                "type": "string"
+              planType: {
+                type: 'string',
               },
-              "receiptId": {
-                "type": "string"
+              receiptId: {
+                type: 'string',
               },
-              "renewDate": {
-                "type": "string"
-              }
-            }
+              renewDate: {
+                type: 'string',
+              },
+            },
           },
-          "User": {
-            "type": "object",
-            "required": ["id", "encodedId", "email"],
-            "properties": {
-              "email": {
-                "type": "string"
+          User: {
+            type: 'object',
+            required: ['id', 'encodedId', 'email'],
+            properties: {
+              email: {
+                type: 'string',
               },
-              "encodedId": {
-                "type": "string"
+              encodedId: {
+                type: 'string',
               },
-              "id": {
-                "type": "number"
-              }
-            }
-          }
-        }
-      }
+              id: {
+                type: 'number',
+              },
+            },
+          },
+        },
+      },
     };
   }
 }
-
