@@ -70,8 +70,13 @@ export class ProspectEvents extends Resource {
 
     // only prod also targets the dev event bridge
     if (!config.isDev) {
-      // TODO: add dev event bridge target
       // https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-cross-account.html
+      // note that permissions have been added by hand to the dev event bus to
+      // allow it to receive events from the prod bus.
+      targets.push({
+        arn: 'arn:aws:events:us-east-1:410318598490:event-bus/PocketEventBridge-Dev-Shared-Event-Bus',
+        targetId: `${config.prefix}-Prospect-Event-Dev-Event-Bridget-Target`
+      })
     }
 
     const prospectEventRuleProps: PocketEventBridgeProps = {
