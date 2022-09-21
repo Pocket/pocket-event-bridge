@@ -7,5 +7,13 @@ export const config = {
     schema: 'queue-check-delete',
     bus: 'default',
   },
+  userMerge: {
+    name: 'user-merge',
+    schema: 'user-merge',
+    //defined in web repo under UserMergeEvent class
+    source: 'user-merge',
+    detailType: ['web-repo'],
+    bus: `${globalConfig.sharedEventBusName}`,
+  },
   prefix: `AccountDeleteMonitor-${globalConfig.environment}`,
 };

@@ -10,6 +10,7 @@ export const config = {
   prefix: `${name}-${environment}`,
   circleCIPrefix: `/${name}/CircleCI/${environment}`,
   shortName: 'PKT_EB',
+  sharedEventBusName: `${name}-${environment}-Shared-Event-Bus`,
   environment,
   tags: {
     service: name,
