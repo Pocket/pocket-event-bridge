@@ -20,6 +20,7 @@ import { QueueCheckDeleteSchema } from './events-schema/queueCheckDelete';
 import { UserMergeEventSchema } from './events-schema/userMergeEvent';
 import { PremiumPurchaseEvent } from './events-schema/premiumPurchaseEvent';
 import { ForgotPasswordRequestEvent } from './events-schema/ForgotPasswordRequestEvent';
+import { PremiumPurchase } from './event-rules/premium-purchase';
 
 class PocketEventBus extends TerraformStack {
   constructor(scope: Construct, name: string) {
@@ -72,6 +73,9 @@ class PocketEventBus extends TerraformStack {
 
     // Events for Account Delete Monitor service
     new AccountDeleteMonitorEvents(this, 'adm-events');
+
+    //premium-purchase event, currently emitted by web-repo
+    new PremiumPurchase(this, 'premium-purchase');
 
     //Schema
     new UserEventsSchema(this, 'user-api-events-schema');

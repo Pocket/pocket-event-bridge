@@ -1,4 +1,8 @@
+import { config as globalConfig } from '../../config';
+
 export const eventConfig = {
-  source: 'user-events',
-  detailType: ['account-deletion', 'account-email-updated'],
+  name: 'PremiumPurchase',
+  source: 'premium-purchase',
+  detailType: ['web-repo'],
+  bus: globalConfig.sharedEventBusName,
 };

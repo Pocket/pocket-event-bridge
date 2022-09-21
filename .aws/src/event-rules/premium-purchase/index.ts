@@ -3,55 +3,50 @@ import { Resource } from 'cdktf';
 import {
   PocketEventBridgeProps,
   PocketEventBridgeRuleWithMultipleTargets,
-  ApplicationEventBus,
 } from '@pocket-tools/terraform-modules';
 import { config } from '../../config';
 import { iam, sns, sqs } from '@cdktf/provider-aws';
 import { eventConfig } from './eventConfig';
 
-export class UserApiEvents extends Resource {
+export class PremiumPurchase extends Resource {
   public readonly snsTopic: sns.SnsTopic;
 
-  constructor(
-    scope: Construct,
-    private name: string,
-    private sharedEventBus: ApplicationEventBus
-  ) {
+  constructor(scope: Construct, private name: string) {
     super(scope, name);
 
-    this.snsTopic = new sns.SnsTopic(this, 'user-event-topic', {
-      name: `${config.prefix}-UserEventTopic`,
+    this.snsTopic = new sns.SnsTopic(this, 'premium-purchase-topic', {
+      name: `${config.prefix}-${eventConfig.name}-Topic`,
     });
 
-    this.createUserEventRules();
+    this.createPremiumPurchaseRules();
     this.createPolicyForEventBridgeToSns();
   }
 
   /**
    * Rolls out event bridge rule and attaches them to sns target
-   * for user-events
+   * for premium-purchase event
    * @private
    */
-  private createUserEventRules() {
+  private createPremiumPurchaseRules() {
     const snsTopicDlq = new sqs.SqsQueue(this, 'sns-topic-dql', {
-      name: `${config.prefix}-SNS-Topic-Event-Rule-DLQ`,
+      name: `${config.prefix}-${eventConfig.name}-SNS-Topic-Event-Rule-DLQ`,
       tags: config.tags,
     });
 
-    const userEventRuleProps: PocketEventBridgeProps = {
+    const premiumPurchaseRuleProps: PocketEventBridgeProps = {
       eventRule: {
-        name: `${config.prefix}-UserEvents-Rule`,
+        name: `${config.prefix}-${eventConfig.name}-Rule`,
         eventPattern: {
           source: [eventConfig.source],
           'detail-type': eventConfig.detailType,
         },
-        eventBusName: this.sharedEventBus.bus.name,
+        eventBusName: eventConfig.bus,
       },
       targets: [
         {
           arn: this.snsTopic.arn,
           deadLetterArn: snsTopicDlq.arn,
-          targetId: `${config.prefix}-User-Event-SNS-Target`,
+          targetId: `${config.prefix}-${eventConfig.name}-SNS-Target`,
           terraformResource: this.snsTopic,
         },
       ],
@@ -59,8 +54,8 @@ export class UserApiEvents extends Resource {
 
     return new PocketEventBridgeRuleWithMultipleTargets(
       this,
-      `${config.prefix}-User-Api-EventBridge-Rule`,
-      userEventRuleProps
+      `${config.prefix}-${eventConfig.name}-EventBridge-Rule`,
+      premiumPurchaseRuleProps
     );
   }
 
@@ -85,7 +80,7 @@ export class UserApiEvents extends Resource {
       }
     ).json;
 
-    return new sns.SnsTopicPolicy(this, 'user-events-sns-topic-policy', {
+    return new sns.SnsTopicPolicy(this, 'premium-purchase-sns-topic-policy', {
       arn: this.snsTopic.arn,
       policy: eventBridgeSnsPolicy,
     });
