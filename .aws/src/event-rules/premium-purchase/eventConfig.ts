@@ -2,7 +2,7 @@ import { config as globalConfig } from '../../config';
 
 export const eventConfig = {
   name: 'PremiumPurchase',
-  source: 'premium-purchase',
-  detailType: ['web-repo'],
+  source: 'web-repo',
+  detailType: ['premium-purchase'],
   bus: globalConfig.sharedEventBusName,
 };
