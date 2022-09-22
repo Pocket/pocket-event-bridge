@@ -6,7 +6,7 @@ import {
   ApplicationEventBus,
 } from '@pocket-tools/terraform-modules';
 import { config } from '../../config';
-import { sns, sqs } from '@cdktf/provider-aws';
+import { sns, sqs, iam } from '@cdktf/provider-aws';
 import { config as admConfig } from './config';
 
 export class AccountDeleteMonitorEvents extends Resource {
@@ -30,7 +30,20 @@ export class AccountDeleteMonitorEvents extends Resource {
     );
 
     this.createAdmRules();
-    this.createUserMergeRules();
+    //todo: revisit - the scheduled event will need iam permission to trigger sqs
+
+    const userMergeRule = this.createUserMergeRules();
+    // Permissions for EventBridge publishing to SQS Target and DLQ (if fail to send)
+    this.createPolicyForEventBridgeRuleToSQS(
+      `${config.prefix}-${admConfig.userMerge.name}-sqs-dlq-iam`,
+      this.sqsDlq,
+      userMergeRule.getEventBridge().rule.arn
+    );
+    this.createPolicyForEventBridgeRuleToSQS(
+      `${config.prefix}-${admConfig.userMerge.name}-sqs-iam`,
+      this.sqs,
+      userMergeRule.getEventBridge().rule.arn
+    );
   }
 
   /**
@@ -90,5 +103,52 @@ export class AccountDeleteMonitorEvents extends Resource {
       `${config.prefix}-${admConfig.userMerge.name}-EventBridge-Rule`,
       userEventRuleProps
     );
+  }
+
+  /**
+   * function to create iam role for the event-bridge rule to publish events
+   * to the sqs
+   * Reference: https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-rule-dlq.html
+   * @param name
+   * @param sqsQueue
+   * @param eventBridgeRuleArn
+   * @private
+   */
+  private createPolicyForEventBridgeRuleToSQS(
+    name: string,
+    sqsQueue: sqs.SqsQueue | sqs.DataAwsSqsQueue,
+    eventBridgeRuleArn: string
+  ) {
+    const eventBridgeRuleSQSPolicy = new iam.DataAwsIamPolicyDocument(
+      this,
+      `${config.prefix}-EventBridge-${name}-Policy`,
+      {
+        statement: [
+          {
+            effect: 'Allow',
+            actions: ['sqs:SendMessage'],
+            resources: [sqsQueue.arn],
+            principals: [
+              {
+                identifiers: ['events.amazonaws.com'],
+                type: 'Service',
+              },
+            ],
+            condition: [
+              {
+                test: 'ArnEquals',
+                variable: 'aws:SourceArn',
+                values: [eventBridgeRuleArn],
+              },
+            ],
+          },
+        ],
+      }
+    ).json;
+
+    return new sqs.SqsQueuePolicy(this, `${name.toLowerCase()}-policy`, {
+      queueUrl: sqsQueue.url,
+      policy: eventBridgeRuleSQSPolicy,
+    });
   }
 }
