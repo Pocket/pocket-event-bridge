@@ -7,5 +7,14 @@ export const config = {
     schema: 'queue-check-delete',
     bus: 'default',
   },
+  userMerge: {
+    name: 'user-merge',
+    schema: 'user-merge',
+    //defined in web repo under UserMergeEvent class
+    //todo: swap after replaying events.
+    source: 'user-merge',
+    detailType: ['web-repo'],
+    bus: `default`, //todo: change it to shared-event-bridge after changing in web-repo
+  },
   prefix: `AccountDeleteMonitor-${globalConfig.environment}`,
 };

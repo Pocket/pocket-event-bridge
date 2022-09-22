@@ -14,21 +14,23 @@ export class AccountDeleteMonitorEvents extends Resource {
   public readonly sqs: sqs.DataAwsSqsQueue;
   public readonly sqsDlq: sqs.DataAwsSqsQueue;
 
-  constructor(
-    scope: Construct,
-    name: string,
-  ) {
+  constructor(scope: Construct, name: string) {
     super(scope, name);
     // pre-existing queues (prod and dev) created by account-delete-monitor
     this.sqs = new sqs.DataAwsSqsQueue(this, `${admConfig.prefix}-queue`, {
-        name: `${admConfig.prefix}-${admConfig.queueCheckDelete.name}-Queue`
-      })
-  
-      this.sqsDlq = new sqs.DataAwsSqsQueue(this, `${admConfig.prefix}-queue-dlq`, {
-        name: `${admConfig.prefix}-${admConfig.queueCheckDelete.name}-Queue-Deadletter`
-      });
-  
+      name: `${admConfig.prefix}-${admConfig.queueCheckDelete.name}-Queue`,
+    });
+
+    this.sqsDlq = new sqs.DataAwsSqsQueue(
+      this,
+      `${admConfig.prefix}-queue-dlq`,
+      {
+        name: `${admConfig.prefix}-${admConfig.queueCheckDelete.name}-Queue-Deadletter`,
+      }
+    );
+
     this.createAdmRules();
+    this.createUserMergeRules();
   }
 
   /**
@@ -55,6 +57,37 @@ export class AccountDeleteMonitorEvents extends Resource {
     return new PocketEventBridgeRuleWithMultipleTargets(
       this,
       `${config.prefix}-${admConfig.queueCheckDelete.name}-EventBridge-Rule`,
+      userEventRuleProps
+    );
+  }
+
+  /**
+   * rule that attaches `user-merge` event from web repo to the
+   * account-delete-monitor lambda
+   * @private
+   */
+  private createUserMergeRules() {
+    const userEventRuleProps: PocketEventBridgeProps = {
+      eventRule: {
+        name: `${config.prefix}-${admConfig.userMerge.name}-Rule`,
+        eventPattern: {
+          source: [admConfig.userMerge.source],
+          'detail-type': admConfig.userMerge.detailType,
+        },
+        eventBusName: admConfig.userMerge.bus,
+      },
+      targets: [
+        {
+          arn: this.sqs.arn,
+          deadLetterArn: this.sqsDlq.arn,
+          targetId: `${admConfig.prefix}-${admConfig.userMerge.name}-Rule-Target`,
+        },
+      ],
+    };
+
+    return new PocketEventBridgeRuleWithMultipleTargets(
+      this,
+      `${config.prefix}-${admConfig.userMerge.name}-EventBridge-Rule`,
       userEventRuleProps
     );
   }
