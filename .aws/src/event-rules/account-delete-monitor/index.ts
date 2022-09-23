@@ -3,16 +3,15 @@ import { Resource } from 'cdktf';
 import {
   PocketEventBridgeProps,
   PocketEventBridgeRuleWithMultipleTargets,
-  ApplicationEventBus,
 } from '@pocket-tools/terraform-modules';
 import { config } from '../../config';
 import { sns, sqs, iam } from '@cdktf/provider-aws';
 import { config as admConfig } from './config';
 
 export class AccountDeleteMonitorEvents extends Resource {
-  public readonly snsTopic: sns.SnsTopic;
   public readonly sqs: sqs.DataAwsSqsQueue;
   public readonly sqsDlq: sqs.DataAwsSqsQueue;
+  public readonly UserMergeTopic: sns.SnsTopic;
 
   constructor(scope: Construct, name: string) {
     super(scope, name);
@@ -32,18 +31,11 @@ export class AccountDeleteMonitorEvents extends Resource {
     this.createAdmRules();
     //todo: revisit - the scheduled event will need iam permission to trigger sqs
 
-    const userMergeRule = this.createUserMergeRules();
-    // Permissions for EventBridge publishing to SQS Target and DLQ (if fail to send)
-    this.createPolicyForEventBridgeRuleToSQS(
-      `${config.prefix}-${admConfig.userMerge.name}-sqs-dlq-iam`,
-      this.sqsDlq,
-      userMergeRule.getEventBridge().rule.arn
-    );
-    this.createPolicyForEventBridgeRuleToSQS(
-      `${config.prefix}-${admConfig.userMerge.name}-sqs-iam`,
-      this.sqs,
-      userMergeRule.getEventBridge().rule.arn
-    );
+    this.UserMergeTopic = new sns.SnsTopic(this, 'user-merge-topic', {
+      name: `${config.prefix}-${admConfig.userMerge.name}-Topic`,
+    });
+    this.createUserMergeRules();
+    this.createPolicyForEventBridgeToSns();
   }
 
   /**
@@ -76,10 +68,15 @@ export class AccountDeleteMonitorEvents extends Resource {
 
   /**
    * rule that attaches `user-merge` event from web repo to the
-   * account-delete-monitor lambda
+   * sns topic
    * @private
    */
   private createUserMergeRules() {
+    const snsTopicDlq = new sqs.SqsQueue(this, 'sns-topic-dql', {
+      name: `${config.prefix}-${admConfig.userMerge.name}-SNS-Topic-DLQ`,
+      tags: config.tags,
+    });
+
     const userEventRuleProps: PocketEventBridgeProps = {
       eventRule: {
         name: `${config.prefix}-${admConfig.userMerge.name}-Rule`,
@@ -91,9 +88,10 @@ export class AccountDeleteMonitorEvents extends Resource {
       },
       targets: [
         {
-          arn: this.sqs.arn,
-          deadLetterArn: this.sqsDlq.arn,
+          arn: this.UserMergeTopic.arn,
+          deadLetterArn: snsTopicDlq.arn,
           targetId: `${admConfig.prefix}-${admConfig.userMerge.name}-Rule-Target`,
+          terraformResource: this.UserMergeTopic,
         },
       ],
     };
@@ -106,39 +104,23 @@ export class AccountDeleteMonitorEvents extends Resource {
   }
 
   /**
-   * function to create iam role for the event-bridge rule to publish events
-   * to the sqs
-   * Reference: https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-rule-dlq.html
-   * @param name
-   * @param sqsQueue
-   * @param eventBridgeRuleArn
+   * policy attachment for event-bridge rule with sns
    * @private
    */
-  private createPolicyForEventBridgeRuleToSQS(
-    name: string,
-    sqsQueue: sqs.SqsQueue | sqs.DataAwsSqsQueue,
-    eventBridgeRuleArn: string
-  ) {
-    const eventBridgeRuleSQSPolicy = new iam.DataAwsIamPolicyDocument(
+  private createPolicyForEventBridgeToSns() {
+    const eventBridgeSnsPolicy = new iam.DataAwsIamPolicyDocument(
       this,
-      `${config.prefix}-EventBridge-${name}-Policy`,
+      `${config.prefix}-EventBridge-SNS-Policy`,
       {
         statement: [
           {
             effect: 'Allow',
-            actions: ['sqs:SendMessage'],
-            resources: [sqsQueue.arn],
+            actions: ['sns:Publish'],
+            resources: [this.UserMergeTopic.arn],
             principals: [
               {
                 identifiers: ['events.amazonaws.com'],
                 type: 'Service',
-              },
-            ],
-            condition: [
-              {
-                test: 'ArnEquals',
-                variable: 'aws:SourceArn',
-                values: [eventBridgeRuleArn],
               },
             ],
           },
@@ -146,9 +128,9 @@ export class AccountDeleteMonitorEvents extends Resource {
       }
     ).json;
 
-    return new sqs.SqsQueuePolicy(this, `${name.toLowerCase()}-policy`, {
-      queueUrl: sqsQueue.url,
-      policy: eventBridgeRuleSQSPolicy,
+    return new sns.SnsTopicPolicy(this, 'user-events-sns-topic-policy', {
+      arn: this.UserMergeTopic.arn,
+      policy: eventBridgeSnsPolicy,
     });
   }
 }

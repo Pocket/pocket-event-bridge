@@ -8,7 +8,7 @@ export const config = {
     bus: 'default',
   },
   userMerge: {
-    name: 'user-merge',
+    name: 'UserMerge',
     schema: 'user-merge',
     //defined in web repo under UserMergeEvent class
     //todo: swap after replaying events.
