@@ -126,7 +126,7 @@ export class ProspectEvents extends Resource {
 
     const prospectEventRuleProps: PocketEventBridgeProps = {
       eventRule: {
-        name: `${config.prefix}-ProspectEvents-Rule`,
+        name: `${config.prefix}-Dismiss-Prospect-Events-Rule`,
         eventPattern: {
           source: [eventConfig.dismissProspect.source],
           'detail-type': eventConfig.dismissProspect.detailType,
