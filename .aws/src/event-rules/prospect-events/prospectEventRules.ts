@@ -11,17 +11,19 @@ import { iam, sns, sqs } from '@cdktf/provider-aws';
 import { eventConfig } from './eventConfig';
 
 /**
- * Purpose:
+ * Purposes:
  *
- * The purpose of this rule set is to send ML-generated prospects to two
+ * 1. Set up a rule set to send ML-generated prospects to two
  * separate systems:
  *
- * 1. A pre-existing production SQS queue that is consumed by a lambda which
- * feeds those prospects to the curation admin tool.
+ *    a. A pre-existing production SQS queue that is consumed by a lambda which
+ *       feeds those prospects to the curation admin tool.
  *
- * 2. The dev instance of this event bridge, which will in turn send the
- * prospects to the dev SQS queue to be consumed by the dev lambda and sent
- * to the dev curation admin tool :D
+ *    b. The dev instance of this event bridge, which will in turn send the
+ *       prospects to the dev SQS queue to be consumed by the dev lambda and sent
+ *       to the dev curation admin tool :D
+ *
+ * 2. Set up the event rule for the dismiss-prospect event.
  *
  * Note that this class behaves differently based on the environment to which
  * it was deployed!
@@ -62,6 +64,7 @@ export class ProspectEvents extends Resource {
     this.createProspectEventRules();
     this.createPolicyForEventBridgeToSqs();
 
+    // setting up dismiss-prospect event rule and setting the required IAM policies
     this.createDismissProspectEventRule();
     this.createPolicyForEventBridgeToSns();
 
@@ -113,18 +116,20 @@ export class ProspectEvents extends Resource {
     );
   }
 
-  //TODO: add comments
+  /**
+   * Create an event bridge rule for the dismiss-prospect event. Note that this event rule uses a SNS topic.
+   */
   private createDismissProspectEventRule() {
     const targets: PocketEventBridgeTargets[] = [
       {
         arn: this.snsTopic.arn,
-        deadLetterArn: this.sqsDlq.arn, //using the same DLQ for all prospect events
+        deadLetterArn: this.sqsDlq.arn, //using the same DLQ for all prospect events (prospect-generation and dismiss-prospect as of now)
         targetId: `${config.prefix}-Prospect-Event-SNS-Target`,
         terraformResource: this.snsTopic,
       },
     ];
 
-    const prospectEventRuleProps: PocketEventBridgeProps = {
+    const dismissProspectEventRuleProps: PocketEventBridgeProps = {
       eventRule: {
         name: `${config.prefix}-Dismiss-Prospect-Events-Rule`,
         eventPattern: {
@@ -139,11 +144,13 @@ export class ProspectEvents extends Resource {
     new PocketEventBridgeRuleWithMultipleTargets(
       this,
       `${config.prefix}-Dismiss-Prospect-Prod-EventBridge-Rule`,
-      prospectEventRuleProps
+      dismissProspectEventRuleProps
     );
   }
 
-  //TODO: add comments
+  /**
+   * Create IAM policy to allow EventBridge to publish to the SNS topic.
+   */
   private createPolicyForEventBridgeToSns() {
     const eventBridgeSnsPolicy = new iam.DataAwsIamPolicyDocument(
       this,
