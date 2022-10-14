@@ -1,8 +1,10 @@
 export const eventConfig = {
-  source: 'prospect-events',
-  detailType: ['prospect-generation'],
-  dismissProspect: {
+  prospectGeneration: {
     source: 'prospect-events',
-    detailType: ['dismiss-prospect'],
+    detailType: ['prospect-generation'],
+  },
+  prospectDismiss: {
+    source: 'prospect-events',
+    detailType: ['prospect-dismiss'],
   },
 };
