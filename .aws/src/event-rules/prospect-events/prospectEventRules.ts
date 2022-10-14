@@ -67,7 +67,7 @@ export class ProspectEvents extends Resource {
     this.createProspectGenerationEventRule();
     this.createPolicyForEventBridgeToSqs();
 
-    // setting up dismiss-prospect event rule
+    // setting up prospect-dismiss event rule
     this.createProspectEventRule(
       'Dismiss-Prospect-Events-Rule',
       eventConfig.prospectDismiss.source,
@@ -109,7 +109,7 @@ export class ProspectEvents extends Resource {
     name = this.snsNameForProspectEvents
   ): sns.SnsTopic {
     return new sns.SnsTopic(this, id, {
-      name: name,
+      name,
     });
   }
 
