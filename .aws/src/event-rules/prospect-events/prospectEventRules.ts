@@ -14,7 +14,7 @@ import { eventConfig } from './eventConfig';
  * Purposes:
  *
  * 1. Set up a rule set to send ML-generated prospects to two
- * separate systems:
+ * separate systems (prospect-generation event):
  *
  *    a. A pre-existing production SQS queue that is consumed by a lambda which
  *       feeds those prospects to the curation admin tool.
@@ -23,7 +23,7 @@ import { eventConfig } from './eventConfig';
  *       prospects to the dev SQS queue to be consumed by the dev lambda and sent
  *       to the dev curation admin tool :D
  *
- * 2. Set up the event rule for the dismiss-prospect event.
+ * 2. Set up the SNS topic and Event Bridge rules for all of the other Prospect events. (prospect-dismiss event as of now)
  *
  * Note that this class behaves differently based on the environment to which
  * it was deployed!
