@@ -69,7 +69,7 @@ export class ProspectEvents extends Resource {
 
     // setting up prospect-dismiss event rule
     this.createProspectEventRule(
-      'Dismiss-Prospect-Events-Rule',
+      'Prospect-Dismiss',
       eventConfig.prospectDismiss.source,
       eventConfig.prospectDismiss.detailType
     );
@@ -181,7 +181,7 @@ export class ProspectEvents extends Resource {
 
     const prospectEventRuleProps = {
       eventRule: {
-        name: `${config.prefix}-${name}`,
+        name: `${config.prefix}-${name}-Event-Rule`,
         eventPattern: {
           source: [source],
           'detail-type': detailType,
