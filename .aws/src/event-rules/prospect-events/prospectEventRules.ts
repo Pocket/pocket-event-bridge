@@ -36,8 +36,8 @@ export class ProspectEvents extends Resource {
   readonly sqsIdForProspectGenerationEvent = `prospect-${config.environment}-queue`;
   readonly sqsNameForProspectGenerationEvent = `ProspectAPI-${config.environment}-Sqs-Translation-Queue`;
 
-  readonly dlqIdForProspectGenerationEvent = `prospect-${config.environment}-dlq`;
-  readonly dlqNameForProspectGenerationEvent = `ProspectAPI-${config.environment}-Sqs-Translation-Queue-Deadletter`;
+  readonly dlqIdForProspectEvents = `prospect-${config.environment}-dlq`;
+  readonly dlqNameForProspectEvents = `ProspectAPI-${config.environment}-Sqs-Translation-Queue-Deadletter`;
 
   readonly snsIdForProspectEvents = `prospect-event-topic`;
   readonly snsNameForProspectEvents = `${config.prefix}-ProspectEventTopic`;
@@ -57,8 +57,8 @@ export class ProspectEvents extends Resource {
 
     // create a dlq for all Prospect events
     this.sqsDlq = this.createSqsForProspectEvents(
-      this.dlqIdForProspectGenerationEvent,
-      this.dlqNameForProspectGenerationEvent
+      this.dlqIdForProspectEvents,
+      this.dlqNameForProspectEvents
     );
 
     // create an SNS topic for all Prospect events except for prospect-generation
