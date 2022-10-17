@@ -28,7 +28,7 @@ export class PremiumPurchase extends Resource {
    * @private
    */
   private createPremiumPurchaseRules() {
-    const snsTopicDlq = new sqs.SqsQueue(this, 'sns-topic-dql', {
+    const snsTopicDlq = new sqs.SqsQueue(this, 'sns-topic-dlq', {
       name: `${config.prefix}-${eventConfig.name}-SNS-Topic-Event-Rule-DLQ`,
       tags: config.tags,
     });
