@@ -11,6 +11,7 @@ export const config = {
   circleCIPrefix: `/${name}/CircleCI/${environment}`,
   shortName: 'PKT_EB',
   environment,
+  sharedEventBusName: `${name}-${environment}-Shared-Event-Bus`,
   tags: {
     service: name,
     environment,
