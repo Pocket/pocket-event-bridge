@@ -81,6 +81,7 @@ export class ProspectEvents extends Resource {
     // this.createPolicyForEventBridgeToDevEventBridge();
 
     createDeadLetterQueueAlarm(
+      this,
       this.sqsDlq.name,
       'prospect-event-rule-dlq-alarm'
     );

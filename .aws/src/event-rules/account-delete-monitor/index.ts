@@ -39,6 +39,7 @@ export class AccountDeleteMonitorEvents extends Resource {
     this.createPolicyForEventBridgeToSns();
 
     createDeadLetterQueueAlarm(
+      this,
       this.sqsDlq.name,
       'AccountDeleteMonitorRule-Dlq-Alarm'
     );

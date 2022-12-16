@@ -33,9 +33,14 @@ export class UserApiEvents extends Resource {
     this.createUserEventRules();
     this.createPolicyForEventBridgeToSns();
 
+    //get alerted if we get 10 messages in DLQ in 4 evaluation period of 5 minutes
     createDeadLetterQueueAlarm(
+      this,
       this.snsTopicDlq.name,
-      'user-event-rule-dlq-alarm'
+      'user-event-rule-dlq-alarm',
+      4,
+      300,
+      10
     );
   }
 
@@ -59,12 +64,6 @@ export class UserApiEvents extends Resource {
           arn: this.snsTopic.arn,
           deadLetterArn: this.snsTopicDlq.arn,
           targetId: `${config.prefix}-User-Event-SNS-Target`,
-          terraformResource: this.snsTopic,
-        },
-        {
-          arn: this.snsTopic.arn,
-          deadLetterArn: this.snsTopicDlq.arn,
-          targetId: `${config.prefix}-User-Event-SNS -Snowplow-Target`,
           terraformResource: this.snsTopic,
         },
       ],

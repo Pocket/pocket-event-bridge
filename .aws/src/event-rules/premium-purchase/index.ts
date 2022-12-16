@@ -29,6 +29,7 @@ export class PremiumPurchase extends Resource {
     this.createPolicyForEventBridgeToSns();
 
     createDeadLetterQueueAlarm(
+      this,
       this.snsTopicDlq.name,
       `${eventConfig.name}-rule-dlq-alarm`
     );

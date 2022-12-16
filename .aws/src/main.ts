@@ -10,7 +10,6 @@ import {
 } from '@pocket-tools/terraform-modules/dist/base/ApplicationEventBus';
 import { UserApiEvents } from './event-rules/user-api-events/userApiEventRules';
 import { ProspectEvents } from './event-rules/prospect-events/prospectEventRules';
-import { SnowplowConsumer } from './shared-consumers/snowplowConsumer';
 import { PocketVPC } from '@pocket-tools/terraform-modules';
 import { ArchiveProvider } from '@cdktf/provider-archive';
 import { config } from './config';
@@ -58,13 +57,6 @@ class PocketEventBus extends TerraformStack {
       this,
       'user-api-events',
       sharedPocketEventBus
-    );
-
-    new SnowplowConsumer(
-      this,
-      'pocket-snowplow-consumer',
-      pocketVpc,
-      userEvents.snsTopic
     );
 
     // prospect events (note that the following behaves differently in prod
