@@ -8,9 +8,11 @@ import {
 import { config } from '../../config';
 import { iam, sns, sqs } from '@cdktf/provider-aws';
 import { eventConfig } from './eventConfig';
+import { createDeadLetterQueueAlarm } from '../utils';
 
 export class UserApiEvents extends Resource {
   public readonly snsTopic: sns.SnsTopic;
+  public readonly snsTopicDlq: sqs.SqsQueue;
 
   constructor(
     scope: Construct,
@@ -23,8 +25,18 @@ export class UserApiEvents extends Resource {
       name: `${config.prefix}-UserEventTopic`,
     });
 
+    this.snsTopicDlq = new sqs.SqsQueue(this, 'sns-topic-dql', {
+      name: `${config.prefix}-SNS-Topic-Event-Rule-DLQ`,
+      tags: config.tags,
+    });
+
     this.createUserEventRules();
     this.createPolicyForEventBridgeToSns();
+
+    createDeadLetterQueueAlarm(
+      this.snsTopicDlq.name,
+      'user-event-rule-dlq-alarm'
+    );
   }
 
   /**
@@ -33,11 +45,6 @@ export class UserApiEvents extends Resource {
    * @private
    */
   private createUserEventRules() {
-    const snsTopicDlq = new sqs.SqsQueue(this, 'sns-topic-dql', {
-      name: `${config.prefix}-SNS-Topic-Event-Rule-DLQ`,
-      tags: config.tags,
-    });
-
     const userEventRuleProps: PocketEventBridgeProps = {
       eventRule: {
         name: `${config.prefix}-UserEvents-Rule`,
@@ -50,8 +57,14 @@ export class UserApiEvents extends Resource {
       targets: [
         {
           arn: this.snsTopic.arn,
-          deadLetterArn: snsTopicDlq.arn,
+          deadLetterArn: this.snsTopicDlq.arn,
           targetId: `${config.prefix}-User-Event-SNS-Target`,
+          terraformResource: this.snsTopic,
+        },
+        {
+          arn: this.snsTopic.arn,
+          deadLetterArn: this.snsTopicDlq.arn,
+          targetId: `${config.prefix}-User-Event-SNS -Snowplow-Target`,
           terraformResource: this.snsTopic,
         },
       ],

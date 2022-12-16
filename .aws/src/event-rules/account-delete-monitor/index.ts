@@ -7,6 +7,7 @@ import {
 import { config } from '../../config';
 import { sns, sqs, iam } from '@cdktf/provider-aws';
 import { config as admConfig } from './config';
+import { createDeadLetterQueueAlarm } from '../utils';
 
 export class AccountDeleteMonitorEvents extends Resource {
   public readonly sqs: sqs.DataAwsSqsQueue;
@@ -36,6 +37,11 @@ export class AccountDeleteMonitorEvents extends Resource {
     });
     this.createUserMergeRules();
     this.createPolicyForEventBridgeToSns();
+
+    createDeadLetterQueueAlarm(
+      this.sqsDlq.name,
+      'AccountDeleteMonitorRule-Dlq-Alarm'
+    );
   }
 
   /**

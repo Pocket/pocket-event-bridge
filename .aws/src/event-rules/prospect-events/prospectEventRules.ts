@@ -9,6 +9,7 @@ import {
 import { config } from '../../config';
 import { iam, sns, sqs } from '@cdktf/provider-aws';
 import { eventConfig } from './eventConfig';
+import { createDeadLetterQueueAlarm } from '../utils';
 
 /**
  * Purposes:
@@ -78,6 +79,11 @@ export class ProspectEvents extends Resource {
 
     // TODO: create a policy function for dev event bridge
     // this.createPolicyForEventBridgeToDevEventBridge();
+
+    createDeadLetterQueueAlarm(
+      this.sqsDlq.name,
+      'prospect-event-rule-dlq-alarm'
+    );
   }
 
   /**
