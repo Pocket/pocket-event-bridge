@@ -1,5 +1,6 @@
 import { cloudwatch } from '@cdktf/provider-aws';
 import { config } from '../config';
+import { PocketPagerDuty } from '@pocket-tools/terraform-modules';
 
 /**
  * Function to create alarms for Dead-letter queues
@@ -17,8 +18,9 @@ import { config } from '../config';
  */
 export function createDeadLetterQueueAlarm(
   stack,
-  queueName,
-  alarmName,
+  pagerDuty: PocketPagerDuty,
+  queueName: string,
+  alarmName: string,
   evaluationPeriods = 2,
   periodInSeconds = 900,
   threshold = 15
@@ -34,11 +36,7 @@ export function createDeadLetterQueueAlarm(
     period: periodInSeconds,
     threshold: threshold,
     statistic: 'Sum',
-    alarmActions: config.isDev
-      ? []
-      : [this.config.pagerDuty.snsNonCriticalAlarmTopic.arn],
-    okActions: config.isDev
-      ? []
-      : [this.config.pagerDuty.snsNonCriticalAlarmTopic.arn],
+    alarmActions: config.isDev ? [] : [pagerDuty.snsNonCriticalAlarmTopic.arn],
+    okActions: config.isDev ? [] : [pagerDuty.snsNonCriticalAlarmTopic.arn],
   });
 }

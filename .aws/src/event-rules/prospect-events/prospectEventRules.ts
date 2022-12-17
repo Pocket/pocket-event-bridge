@@ -5,6 +5,7 @@ import {
   PocketEventBridgeRuleWithMultipleTargets,
   ApplicationEventBus,
   PocketEventBridgeTargets,
+  PocketPagerDuty,
 } from '@pocket-tools/terraform-modules';
 import { config } from '../../config';
 import { iam, sns, sqs } from '@cdktf/provider-aws';
@@ -46,7 +47,8 @@ export class ProspectEvents extends Resource {
   constructor(
     scope: Construct,
     private name: string,
-    private sharedEventBus: ApplicationEventBus
+    private sharedEventBus: ApplicationEventBus,
+    private pagerDuty: PocketPagerDuty
   ) {
     super(scope, name);
 
@@ -82,6 +84,7 @@ export class ProspectEvents extends Resource {
 
     createDeadLetterQueueAlarm(
       this,
+      pagerDuty,
       this.sqsDlq.name,
       'prospect-event-rule-dlq-alarm'
     );

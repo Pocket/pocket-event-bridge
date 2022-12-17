@@ -3,6 +3,7 @@ import { Resource } from 'cdktf';
 import {
   PocketEventBridgeProps,
   PocketEventBridgeRuleWithMultipleTargets,
+  PocketPagerDuty,
 } from '@pocket-tools/terraform-modules';
 import { config } from '../../config';
 import { iam, sns, sqs } from '@cdktf/provider-aws';
@@ -13,7 +14,11 @@ export class PremiumPurchase extends Resource {
   public readonly snsTopic: sns.SnsTopic;
   public readonly snsTopicDlq: sqs.SqsQueue;
 
-  constructor(scope: Construct, private name: string) {
+  constructor(
+    scope: Construct,
+    private name: string,
+    private pagerDuty: PocketPagerDuty
+  ) {
     super(scope, name);
 
     this.snsTopic = new sns.SnsTopic(this, 'premium-purchase-topic', {
@@ -30,6 +35,7 @@ export class PremiumPurchase extends Resource {
 
     createDeadLetterQueueAlarm(
       this,
+      pagerDuty,
       this.snsTopicDlq.name,
       `${eventConfig.name}-rule-dlq-alarm`
     );

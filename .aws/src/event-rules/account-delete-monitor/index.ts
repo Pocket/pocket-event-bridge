@@ -3,6 +3,7 @@ import { Resource } from 'cdktf';
 import {
   PocketEventBridgeProps,
   PocketEventBridgeRuleWithMultipleTargets,
+  PocketPagerDuty,
 } from '@pocket-tools/terraform-modules';
 import { config } from '../../config';
 import { sns, sqs, iam } from '@cdktf/provider-aws';
@@ -14,7 +15,11 @@ export class AccountDeleteMonitorEvents extends Resource {
   public readonly sqsDlq: sqs.DataAwsSqsQueue;
   public readonly UserMergeTopic: sns.SnsTopic;
 
-  constructor(scope: Construct, name: string) {
+  constructor(
+    scope: Construct,
+    name: string,
+    private pagerDuty: PocketPagerDuty
+  ) {
     super(scope, name);
     // pre-existing queues (prod and dev) created by account-delete-monitor
     this.sqs = new sqs.DataAwsSqsQueue(this, `${admConfig.prefix}-queue`, {
@@ -40,6 +45,7 @@ export class AccountDeleteMonitorEvents extends Resource {
 
     createDeadLetterQueueAlarm(
       this,
+      pagerDuty,
       this.sqsDlq.name,
       'AccountDeleteMonitorRule-Dlq-Alarm'
     );

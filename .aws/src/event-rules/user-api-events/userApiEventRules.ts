@@ -4,6 +4,7 @@ import {
   PocketEventBridgeProps,
   PocketEventBridgeRuleWithMultipleTargets,
   ApplicationEventBus,
+  PocketPagerDuty,
 } from '@pocket-tools/terraform-modules';
 import { config } from '../../config';
 import { iam, sns, sqs } from '@cdktf/provider-aws';
@@ -17,7 +18,8 @@ export class UserApiEvents extends Resource {
   constructor(
     scope: Construct,
     private name: string,
-    private sharedEventBus: ApplicationEventBus
+    private sharedEventBus: ApplicationEventBus,
+    private pagerDuty: PocketPagerDuty
   ) {
     super(scope, name);
 
@@ -36,6 +38,7 @@ export class UserApiEvents extends Resource {
     //get alerted if we get 10 messages in DLQ in 4 evaluation period of 5 minutes
     createDeadLetterQueueAlarm(
       this,
+      pagerDuty,
       this.snsTopicDlq.name,
       'user-event-rule-dlq-alarm',
       4,
