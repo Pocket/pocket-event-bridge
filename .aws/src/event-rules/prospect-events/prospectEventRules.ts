@@ -86,7 +86,7 @@ export class ProspectEvents extends Resource {
       this,
       pagerDuty,
       this.sqsDlq.name,
-      'prospect-event-rule-dlq-alarm'
+      `${eventConfig.name}-Rule-DLQ-Alarm`
     );
   }
 

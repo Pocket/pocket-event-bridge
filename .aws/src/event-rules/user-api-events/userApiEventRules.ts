@@ -40,7 +40,7 @@ export class UserApiEvents extends Resource {
       this,
       pagerDuty,
       this.snsTopicDlq.name,
-      'user-event-rule-dlq-alarm',
+      `${eventConfig.name}-Rule-dlq-alarm`,
       4,
       300,
       10
@@ -55,7 +55,7 @@ export class UserApiEvents extends Resource {
   private createUserEventRules() {
     const userEventRuleProps: PocketEventBridgeProps = {
       eventRule: {
-        name: `${config.prefix}-UserEvents-Rule`,
+        name: `${config.prefix}-${eventConfig.name}-Rule`,
         eventPattern: {
           source: [eventConfig.source],
           'detail-type': eventConfig.detailType,

@@ -47,7 +47,7 @@ export class AccountDeleteMonitorEvents extends Resource {
       this,
       pagerDuty,
       this.sqsDlq.name,
-      'AccountDeleteMonitorRule-Dlq-Alarm'
+      `${config.prefix}-Dlq-Alarm`
     );
   }
 
