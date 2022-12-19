@@ -1,5 +1,10 @@
 import { Construct } from 'constructs';
-import { App, RemoteBackend, TerraformStack } from 'cdktf';
+import {
+  App,
+  RemoteBackend,
+  TerraformStack,
+  DataTerraformRemoteState,
+} from 'cdktf';
 import { AwsProvider } from '@cdktf/provider-aws';
 import { PagerdutyProvider } from '@cdktf/provider-pagerduty';
 import { LocalProvider } from '@cdktf/provider-local';
@@ -10,8 +15,7 @@ import {
 } from '@pocket-tools/terraform-modules/dist/base/ApplicationEventBus';
 import { UserApiEvents } from './event-rules/user-api-events/userApiEventRules';
 import { ProspectEvents } from './event-rules/prospect-events/prospectEventRules';
-import { SnowplowConsumer } from './shared-consumers/snowplowConsumer';
-import { PocketVPC } from '@pocket-tools/terraform-modules';
+import { PocketPagerDuty, PocketVPC } from '@pocket-tools/terraform-modules';
 import { ArchiveProvider } from '@cdktf/provider-archive';
 import { config } from './config';
 import { UserEventsSchema } from './events-schema/userEvents';
@@ -50,6 +54,7 @@ class PocketEventBus extends TerraformStack {
     );
 
     const pocketVpc = new PocketVPC(this, 'pocket-vpc');
+    const pagerDuty = this.createPagerDuty();
 
     // CUSTOM EVENTS & CONSUMERS
 
@@ -57,25 +62,24 @@ class PocketEventBus extends TerraformStack {
     const userEvents = new UserApiEvents(
       this,
       'user-api-events',
-      sharedPocketEventBus
-    );
-
-    new SnowplowConsumer(
-      this,
-      'pocket-snowplow-consumer',
-      pocketVpc,
-      userEvents.snsTopic
+      sharedPocketEventBus,
+      pagerDuty
     );
 
     // prospect events (note that the following behaves differently in prod
     // versus dev - check the file for more details)
-    new ProspectEvents(this, 'prospect-events', sharedPocketEventBus);
+    new ProspectEvents(
+      this,
+      'prospect-events',
+      sharedPocketEventBus,
+      pagerDuty
+    );
 
     // Events for Account Delete Monitor service
-    new AccountDeleteMonitorEvents(this, 'adm-events');
+    new AccountDeleteMonitorEvents(this, 'adm-events', pagerDuty);
 
     //'Premium Purchase' event, currently emitted by web-repo
-    new PremiumPurchase(this, 'premium-purchase');
+    new PremiumPurchase(this, 'premium-purchase', pagerDuty);
 
     //Schema
     new UserEventsSchema(this, 'user-api-events-schema');
@@ -86,6 +90,35 @@ class PocketEventBus extends TerraformStack {
       this,
       'forgot-password-request-event-schema'
     );
+  }
+
+  /**
+   * Create PagerDuty service for alerts
+   * @private
+   */
+  private createPagerDuty() {
+    const incidentManagement = new DataTerraformRemoteState(
+      this,
+      'incident_management',
+      {
+        organization: 'Pocket',
+        workspaces: {
+          name: 'incident-management',
+        },
+      }
+    );
+
+    return new PocketPagerDuty(this, 'pagerduty', {
+      prefix: config.prefix,
+      service: {
+        criticalEscalationPolicyId: incidentManagement
+          .get('policy_backend_critical_id')
+          .toString(),
+        nonCriticalEscalationPolicyId: incidentManagement
+          .get('policy_backend_non_critical_id')
+          .toString(),
+      },
+    });
   }
 }
 

@@ -3,23 +3,42 @@ import { Resource } from 'cdktf';
 import {
   PocketEventBridgeProps,
   PocketEventBridgeRuleWithMultipleTargets,
+  PocketPagerDuty,
 } from '@pocket-tools/terraform-modules';
 import { config } from '../../config';
 import { iam, sns, sqs } from '@cdktf/provider-aws';
 import { eventConfig } from './eventConfig';
+import { createDeadLetterQueueAlarm } from '../utils';
 
 export class PremiumPurchase extends Resource {
   public readonly snsTopic: sns.SnsTopic;
+  public readonly snsTopicDlq: sqs.SqsQueue;
 
-  constructor(scope: Construct, private name: string) {
+  constructor(
+    scope: Construct,
+    private name: string,
+    private pagerDuty: PocketPagerDuty
+  ) {
     super(scope, name);
 
     this.snsTopic = new sns.SnsTopic(this, 'premium-purchase-topic', {
       name: `${config.prefix}-${eventConfig.name}-Topic`,
     });
 
+    this.snsTopicDlq = new sqs.SqsQueue(this, 'sns-topic-dlq', {
+      name: `${config.prefix}-${eventConfig.name}-SNS-Topic-Event-Rule-DLQ`,
+      tags: config.tags,
+    });
+
     this.createPremiumPurchaseRules();
     this.createPolicyForEventBridgeToSns();
+
+    createDeadLetterQueueAlarm(
+      this,
+      pagerDuty,
+      this.snsTopicDlq.name,
+      `${eventConfig.name}-rule-dlq-alarm`
+    );
   }
 
   /**
@@ -28,11 +47,6 @@ export class PremiumPurchase extends Resource {
    * @private
    */
   private createPremiumPurchaseRules() {
-    const snsTopicDlq = new sqs.SqsQueue(this, 'sns-topic-dlq', {
-      name: `${config.prefix}-${eventConfig.name}-SNS-Topic-Event-Rule-DLQ`,
-      tags: config.tags,
-    });
-
     const premiumPurchaseRuleProps: PocketEventBridgeProps = {
       eventRule: {
         name: `${config.prefix}-${eventConfig.name}-Rule`,
@@ -45,7 +59,7 @@ export class PremiumPurchase extends Resource {
       targets: [
         {
           arn: this.snsTopic.arn,
-          deadLetterArn: snsTopicDlq.arn,
+          deadLetterArn: this.snsTopicDlq.arn,
           targetId: `${config.prefix}-${eventConfig.name}-SNS-Target`,
           terraformResource: this.snsTopic,
         },

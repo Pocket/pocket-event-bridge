@@ -4,18 +4,22 @@ import {
   PocketEventBridgeProps,
   PocketEventBridgeRuleWithMultipleTargets,
   ApplicationEventBus,
+  PocketPagerDuty,
 } from '@pocket-tools/terraform-modules';
 import { config } from '../../config';
 import { iam, sns, sqs } from '@cdktf/provider-aws';
 import { eventConfig } from './eventConfig';
+import { createDeadLetterQueueAlarm } from '../utils';
 
 export class UserApiEvents extends Resource {
   public readonly snsTopic: sns.SnsTopic;
+  public readonly snsTopicDlq: sqs.SqsQueue;
 
   constructor(
     scope: Construct,
     private name: string,
-    private sharedEventBus: ApplicationEventBus
+    private sharedEventBus: ApplicationEventBus,
+    private pagerDuty: PocketPagerDuty
   ) {
     super(scope, name);
 
@@ -23,8 +27,24 @@ export class UserApiEvents extends Resource {
       name: `${config.prefix}-UserEventTopic`,
     });
 
+    this.snsTopicDlq = new sqs.SqsQueue(this, 'sns-topic-dql', {
+      name: `${config.prefix}-SNS-Topic-Event-Rule-DLQ`,
+      tags: config.tags,
+    });
+
     this.createUserEventRules();
     this.createPolicyForEventBridgeToSns();
+
+    //get alerted if we get 10 messages in DLQ in 4 evaluation period of 5 minutes
+    createDeadLetterQueueAlarm(
+      this,
+      pagerDuty,
+      this.snsTopicDlq.name,
+      `${eventConfig.name}-Rule-dlq-alarm`,
+      4,
+      300,
+      10
+    );
   }
 
   /**
@@ -33,14 +53,9 @@ export class UserApiEvents extends Resource {
    * @private
    */
   private createUserEventRules() {
-    const snsTopicDlq = new sqs.SqsQueue(this, 'sns-topic-dql', {
-      name: `${config.prefix}-SNS-Topic-Event-Rule-DLQ`,
-      tags: config.tags,
-    });
-
     const userEventRuleProps: PocketEventBridgeProps = {
       eventRule: {
-        name: `${config.prefix}-UserEvents-Rule`,
+        name: `${config.prefix}-${eventConfig.name}-Rule`,
         eventPattern: {
           source: [eventConfig.source],
           'detail-type': eventConfig.detailType,
@@ -50,7 +65,7 @@ export class UserApiEvents extends Resource {
       targets: [
         {
           arn: this.snsTopic.arn,
-          deadLetterArn: snsTopicDlq.arn,
+          deadLetterArn: this.snsTopicDlq.arn,
           targetId: `${config.prefix}-User-Event-SNS-Target`,
           terraformResource: this.snsTopic,
         },
