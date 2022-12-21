@@ -26,6 +26,9 @@ export class UserApiEvents extends Resource {
 
     this.snsTopic = new sns.SnsTopic(this, 'user-event-topic', {
       name: `${config.prefix}-UserEventTopic`,
+      lifecycle: {
+        preventDestroy: true,
+      },
     });
 
     this.snsTopicDlq = new sqs.SqsQueue(this, 'sns-topic-dql', {
