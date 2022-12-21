@@ -10,6 +10,7 @@ import { config } from '../../config';
 import { iam, sns, sqs } from '@cdktf/provider-aws';
 import { eventConfig } from './eventConfig';
 import { createDeadLetterQueueAlarm } from '../utils';
+import * as NullProviders from '@cdktf/provider-null';
 
 export class UserApiEvents extends Resource {
   public readonly snsTopic: sns.SnsTopic;
@@ -32,7 +33,7 @@ export class UserApiEvents extends Resource {
       tags: config.tags,
     });
 
-    this.createUserEventRules();
+    const userEvent = this.createUserEventRules();
     this.createPolicyForEventBridgeToSns();
 
     //get alerted if we get 10 messages in DLQ in 4 evaluation period of 5 minutes
@@ -45,6 +46,10 @@ export class UserApiEvents extends Resource {
       300,
       10
     );
+
+    new NullProviders.Resource(this, 'null-resource', {
+      dependsOn: [userEvent.getEventBridge().rule, this.snsTopic],
+    });
   }
 
   /**
