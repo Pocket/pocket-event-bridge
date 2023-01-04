@@ -50,6 +50,11 @@ export class UserApiEvents extends Resource {
       10
     );
 
+    //place-holder resource used to make sure we are not
+    //removing the event-rule or the SNS by mistake
+    //if the resources are removed, this would throw error
+    //just a checkpoint to prevent resource deletion in-addition
+    //to preventDestroy
     new NullProviders.Resource(this, 'null-resource', {
       dependsOn: [userEvent.getEventBridge().rule, this.snsTopic],
     });
@@ -69,6 +74,7 @@ export class UserApiEvents extends Resource {
           'detail-type': eventConfig.detailType,
         },
         eventBusName: this.sharedEventBus.bus.name,
+        preventDestroy: true,
       },
       targets: [
         {
