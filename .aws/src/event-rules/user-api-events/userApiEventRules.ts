@@ -52,7 +52,7 @@ export class UserApiEvents extends Resource {
 
     //place-holder resource used to make sure we are not
     //removing the event-rule or the SNS by mistake
-    //if the resources are removed, this would throw error
+    //if the resources are removed, this would throw compilation error
     //just a checkpoint to prevent resource deletion in-addition
     //to preventDestroy
     new NullProviders.Resource(this, 'null-resource', {
