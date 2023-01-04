@@ -9,6 +9,7 @@ import { config } from '../../config';
 import { iam, sns, sqs } from '@cdktf/provider-aws';
 import { eventConfig } from './eventConfig';
 import { createDeadLetterQueueAlarm } from '../utils';
+import * as NullProviders from '@cdktf/provider-null';
 
 export class PremiumPurchase extends Resource {
   public readonly snsTopic: sns.SnsTopic;
@@ -23,6 +24,9 @@ export class PremiumPurchase extends Resource {
 
     this.snsTopic = new sns.SnsTopic(this, 'premium-purchase-topic', {
       name: `${config.prefix}-${eventConfig.name}-Topic`,
+      lifecycle: {
+        preventDestroy: true,
+      },
     });
 
     this.snsTopicDlq = new sqs.SqsQueue(this, 'sns-topic-dlq', {
@@ -30,7 +34,7 @@ export class PremiumPurchase extends Resource {
       tags: config.tags,
     });
 
-    this.createPremiumPurchaseRules();
+    const premiumPurchaseRule = this.createPremiumPurchaseRules();
     this.createPolicyForEventBridgeToSns();
 
     createDeadLetterQueueAlarm(
@@ -39,6 +43,10 @@ export class PremiumPurchase extends Resource {
       this.snsTopicDlq.name,
       `${eventConfig.name}-rule-dlq-alarm`
     );
+
+    new NullProviders.Resource(this, 'null-resource', {
+      dependsOn: [premiumPurchaseRule.getEventBridge().rule, this.snsTopic],
+    });
   }
 
   /**
@@ -55,6 +63,7 @@ export class PremiumPurchase extends Resource {
           'detail-type': eventConfig.detailType,
         },
         eventBusName: eventConfig.bus,
+        preventDestroy: true,
       },
       targets: [
         {

@@ -69,6 +69,7 @@ export class UserApiEvents extends Resource {
           'detail-type': eventConfig.detailType,
         },
         eventBusName: this.sharedEventBus.bus.name,
+        preventDestroy: true,
       },
       targets: [
         {

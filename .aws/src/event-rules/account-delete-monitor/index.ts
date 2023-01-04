@@ -9,6 +9,7 @@ import { config } from '../../config';
 import { sns, sqs, iam } from '@cdktf/provider-aws';
 import { config as admConfig } from './config';
 import { createDeadLetterQueueAlarm } from '../utils';
+import * as NullProviders from '@cdktf/provider-null';
 
 export class AccountDeleteMonitorEvents extends Resource {
   public readonly sqs: sqs.DataAwsSqsQueue;
@@ -39,8 +40,11 @@ export class AccountDeleteMonitorEvents extends Resource {
 
     this.UserMergeTopic = new sns.SnsTopic(this, 'user-merge-topic', {
       name: `${config.prefix}-${admConfig.userMerge.name}-Topic`,
+      lifecycle: {
+        preventDestroy: true,
+      },
     });
-    this.createUserMergeRules();
+    const userMergeRule = this.createUserMergeRules();
     this.createPolicyForEventBridgeToSns();
 
     createDeadLetterQueueAlarm(
@@ -49,6 +53,10 @@ export class AccountDeleteMonitorEvents extends Resource {
       this.sqsDlq.name,
       `${config.prefix}-Dlq-Alarm`
     );
+
+    new NullProviders.Resource(this, 'null-resource', {
+      dependsOn: [userMergeRule.getEventBridge().rule, this.UserMergeTopic],
+    });
   }
 
   /**
@@ -98,6 +106,7 @@ export class AccountDeleteMonitorEvents extends Resource {
           'detail-type': admConfig.userMerge.detailType,
         },
         eventBusName: admConfig.userMerge.bus,
+        preventDestroy: true,
       },
       targets: [
         {
