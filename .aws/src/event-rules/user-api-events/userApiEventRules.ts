@@ -52,9 +52,10 @@ export class UserApiEvents extends Resource {
 
     //place-holder resource used to make sure we are not
     //removing the event-rule or the SNS by mistake
-    //if the resources are removed, this would throw compilation error
-    //just a checkpoint to prevent resource deletion in-addition
-    //to preventDestroy
+    //if the resources are removed, this would act as an additional check
+    //to prevent resource deletion in-addition to preventDestroy
+    //e.g removing any of the dependsOn resource and running npm build would
+    //throw error
     new NullProviders.Resource(this, 'null-resource', {
       dependsOn: [userEvent.getEventBridge().rule, this.snsTopic],
     });
@@ -85,7 +86,6 @@ export class UserApiEvents extends Resource {
         },
       ],
     };
-
     return new PocketEventBridgeRuleWithMultipleTargets(
       this,
       `${config.prefix}-User-Api-EventBridge-Rule`,
