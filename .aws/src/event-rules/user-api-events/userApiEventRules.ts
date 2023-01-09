@@ -66,6 +66,11 @@ export class UserApiEvents extends Resource {
    * @private
    */
   private createUserEventRules() {
+    const snsTopicDlq = new sqs.SqsQueue(this, 'sns-topic-dql', {
+      name: `${config.prefix}-SNS-Topic-Event-Rule-DLQ`,
+      tags: config.tags,
+    });
+
     const userEventRuleProps: PocketEventBridgeProps = {
       eventRule: {
         name: `${config.prefix}-${eventConfig.name}-Rule`,
