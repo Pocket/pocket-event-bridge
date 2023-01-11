@@ -11,6 +11,7 @@ import { config } from '../../config';
 import { iam, sns, sqs } from '@cdktf/provider-aws';
 import { eventConfig } from './eventConfig';
 import { createDeadLetterQueueAlarm } from '../utils';
+import * as NullProviders from '@cdktf/provider-null';
 
 /**
  * Purposes:
@@ -71,7 +72,7 @@ export class ProspectEvents extends Resource {
     this.createPolicyForEventBridgeToSqs();
 
     // setting up prospect-dismiss event rule
-    this.createProspectEventRule(
+    const prospectEventDismissRule = this.createProspectEventRule(
       'Prospect-Dismiss',
       eventConfig.prospectDismiss.source,
       eventConfig.prospectDismiss.detailType
@@ -88,6 +89,13 @@ export class ProspectEvents extends Resource {
       this.sqsDlq.name,
       `${eventConfig.name}-Rule-DLQ-Alarm`
     );
+
+    new NullProviders.Resource(this, 'null-resource', {
+      dependsOn: [
+        prospectEventDismissRule.getEventBridge().rule,
+        this.snsTopic,
+      ],
+    });
   }
 
   /**
@@ -120,6 +128,9 @@ export class ProspectEvents extends Resource {
   ): sns.SnsTopic {
     return new sns.SnsTopic(this, id, {
       name,
+      lifecycle: {
+        preventDestroy: true,
+      },
     });
   }
 
@@ -197,11 +208,12 @@ export class ProspectEvents extends Resource {
           'detail-type': detailType,
         },
         eventBusName: this.sharedEventBus.bus.name,
+        preventDestroy: true,
       },
       targets,
     };
 
-    new PocketEventBridgeRuleWithMultipleTargets(
+    return new PocketEventBridgeRuleWithMultipleTargets(
       this,
       `${config.prefix}-${name}-Prod-EventBridge-Rule`,
       prospectEventRuleProps

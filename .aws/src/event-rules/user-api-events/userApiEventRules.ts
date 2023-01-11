@@ -10,6 +10,7 @@ import { config } from '../../config';
 import { iam, sns, sqs } from '@cdktf/provider-aws';
 import { eventConfig } from './eventConfig';
 import { createDeadLetterQueueAlarm } from '../utils';
+import * as NullProviders from '@cdktf/provider-null';
 
 export class UserApiEvents extends Resource {
   public readonly snsTopic: sns.SnsTopic;
@@ -25,6 +26,9 @@ export class UserApiEvents extends Resource {
 
     this.snsTopic = new sns.SnsTopic(this, 'user-event-topic', {
       name: `${config.prefix}-UserEventTopic`,
+      lifecycle: {
+        preventDestroy: true,
+      },
     });
 
     this.snsTopicDlq = new sqs.SqsQueue(this, 'sns-topic-dql', {
@@ -32,7 +36,7 @@ export class UserApiEvents extends Resource {
       tags: config.tags,
     });
 
-    this.createUserEventRules();
+    const userEvent = this.createUserEventRules();
     this.createPolicyForEventBridgeToSns();
 
     //get alerted if we get 10 messages in DLQ in 4 evaluation period of 5 minutes
@@ -45,6 +49,16 @@ export class UserApiEvents extends Resource {
       300,
       10
     );
+
+    //place-holder resource used to make sure we are not
+    //removing the event-rule or the SNS by mistake
+    //if the resources are removed, this would act as an additional check
+    //to prevent resource deletion in-addition to preventDestroy
+    //e.g removing any of the dependsOn resource and running npm build would
+    //throw error
+    new NullProviders.Resource(this, 'null-resource', {
+      dependsOn: [userEvent.getEventBridge().rule, this.snsTopic],
+    });
   }
 
   /**
@@ -61,6 +75,7 @@ export class UserApiEvents extends Resource {
           'detail-type': eventConfig.detailType,
         },
         eventBusName: this.sharedEventBus.bus.name,
+        preventDestroy: true,
       },
       targets: [
         {
@@ -71,7 +86,6 @@ export class UserApiEvents extends Resource {
         },
       ],
     };
-
     return new PocketEventBridgeRuleWithMultipleTargets(
       this,
       `${config.prefix}-User-Api-EventBridge-Rule`,
