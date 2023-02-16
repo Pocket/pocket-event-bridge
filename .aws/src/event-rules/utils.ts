@@ -14,6 +14,7 @@ import { PocketPagerDuty } from '@pocket-tools/terraform-modules';
  * @param evaluationPeriods
  * @param periodInSeconds
  * @param threshold
+ * @param enabled if alarm should act on state changes (pass/fail), defaults to true
  * @private
  */
 export function createDeadLetterQueueAlarm(
@@ -21,6 +22,7 @@ export function createDeadLetterQueueAlarm(
   pagerDuty: PocketPagerDuty,
   queueName: string,
   alarmName: string,
+  enabled: boolean = true,
   evaluationPeriods = 2,
   periodInSeconds = 900,
   threshold = 15
@@ -38,5 +40,6 @@ export function createDeadLetterQueueAlarm(
     statistic: 'Sum',
     alarmActions: config.isDev ? [] : [pagerDuty.snsNonCriticalAlarmTopic.arn],
     okActions: config.isDev ? [] : [pagerDuty.snsNonCriticalAlarmTopic.arn],
+    actionsEnabled: enabled,
   });
 }
