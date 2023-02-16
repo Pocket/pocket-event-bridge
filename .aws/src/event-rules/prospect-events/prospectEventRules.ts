@@ -86,12 +86,13 @@ export class ProspectEvents extends Resource {
     //todo: disabling till this ticket is done:
     //https://getpocket.atlassian.net/browse/INFRA-1048
     //prospect-alert triggering false alert for 1 message in the DLQ
-    // createDeadLetterQueueAlarm(
-    //   this,
-    //   pagerDuty,
-    //   this.sqsDlq.name,
-    //   `${eventConfig.name}-Rule-DLQ-Alarm`
-    // );
+    createDeadLetterQueueAlarm(
+      this,
+      pagerDuty,
+      this.sqsDlq.name,
+      `${eventConfig.name}-Rule-DLQ-Alarm`,
+      false // temporarily disabled, see note above
+    );
 
     new NullProviders.Resource(this, 'null-resource', {
       dependsOn: [
