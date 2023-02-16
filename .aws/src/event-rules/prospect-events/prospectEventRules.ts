@@ -83,12 +83,14 @@ export class ProspectEvents extends Resource {
     // TODO: create a policy function for dev event bridge
     // this.createPolicyForEventBridgeToDevEventBridge();
 
-    createDeadLetterQueueAlarm(
-      this,
-      pagerDuty,
-      this.sqsDlq.name,
-      `${eventConfig.name}-Rule-DLQ-Alarm`
-    );
+    //todo: enable this after fixing false alarm
+    //https://getpocket.atlassian.net/browse/INFRA-1048
+    // createDeadLetterQueueAlarm(
+    //   this,
+    //   pagerDuty,
+    //   this.sqsDlq.name,
+    //   `${eventConfig.name}-Rule-DLQ-Alarm`
+    // );
 
     new NullProviders.Resource(this, 'null-resource', {
       dependsOn: [
