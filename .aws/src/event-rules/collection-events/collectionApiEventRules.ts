@@ -45,6 +45,7 @@ export class CollectionApiEvents extends Resource {
       pagerDuty,
       this.snsTopicDlq.name,
       `${eventConfig.name}-Rule-dlq-alarm`,
+      true,
       4,
       300,
       10
