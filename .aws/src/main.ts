@@ -90,6 +90,7 @@ class PocketEventBus extends TerraformStack {
       this,
       'forgot-password-request-event-schema'
     );
+    //TODO add collection events open api schema from aws
   }
 
   /**
