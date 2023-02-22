@@ -15,6 +15,7 @@ import {
 } from '@pocket-tools/terraform-modules/dist/base/ApplicationEventBus';
 import { UserApiEvents } from './event-rules/user-api-events/userApiEventRules';
 import { ProspectEvents } from './event-rules/prospect-events/prospectEventRules';
+import { CollectionApiEvents } from './event-rules/collection-events/collectionApiEventRules';
 import { PocketPagerDuty, PocketVPC } from '@pocket-tools/terraform-modules';
 import { ArchiveProvider } from '@cdktf/provider-archive';
 import { config } from './config';
@@ -90,6 +91,14 @@ class PocketEventBus extends TerraformStack {
       this,
       'forgot-password-request-event-schema'
     );
+
+    new CollectionApiEvents(
+      this,
+      'collection-events',
+      sharedPocketEventBus,
+      pagerDuty
+    );
+    //TODO add collection events open api schema from aws
   }
 
   /**
