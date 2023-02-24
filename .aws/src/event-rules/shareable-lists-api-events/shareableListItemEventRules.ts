@@ -12,7 +12,7 @@ import { eventConfig } from './eventConfig';
 import { createDeadLetterQueueAlarm } from '../utils';
 import * as NullProviders from '@cdktf/provider-null';
 
-export class ShareableListsApiEvents extends Resource {
+export class ShareableListItemEvents extends Resource {
   public readonly snsTopic: sns.SnsTopic;
   public readonly snsTopicDlq: sqs.SqsQueue;
 
@@ -24,8 +24,8 @@ export class ShareableListsApiEvents extends Resource {
   ) {
     super(scope, name);
 
-    this.snsTopic = new sns.SnsTopic(this, 'shareable-lists-api-event-topic', {
-      name: `${config.prefix}-ShareableListsApiEventTopic`,
+    this.snsTopic = new sns.SnsTopic(this, 'shareable-list-item-event-topic', {
+      name: `${config.prefix}-ShareableListItemEventTopic`,
       lifecycle: {
         preventDestroy: true,
       },
@@ -36,15 +36,15 @@ export class ShareableListsApiEvents extends Resource {
       tags: config.tags,
     });
 
-    const slapiEvent = this.createShareableListsApiEventRules();
+    const shareableListEvent = this.createShareableListEventRules();
     this.createPolicyForEventBridgeToSns();
 
-    //get alerted if we get 10 messages in DLQ in 4 evaluation period of 5 minutes
+    //get alerted if we get 10 messages in DLQ in 4 evaluation period of 5 minutes (for shareable-list-item)
     createDeadLetterQueueAlarm(
       this,
       pagerDuty,
       this.snsTopicDlq.name,
-      `${eventConfig.name}-Rule-dlq-alarm`,
+      `${eventConfig.shareableList.name}-Rule-dlq-alarm`,
       true,
       4,
       300,
@@ -58,22 +58,22 @@ export class ShareableListsApiEvents extends Resource {
     //e.g removing any of the dependsOn resource and running npm build would
     //throw error
     new NullProviders.Resource(this, 'null-resource', {
-      dependsOn: [slapiEvent.getEventBridge().rule, this.snsTopic],
+      dependsOn: [shareableListEvent.getEventBridge().rule, this.snsTopic],
     });
   }
 
   /**
    * Rolls out event bridge rule and attaches them to sns target
-   * for slapi-events
+   * for shareable-list-item-events
    * @private
    */
-  private createShareableListsApiEventRules() {
-    const slapiEventRuleProps: PocketEventBridgeProps = {
+  private createShareableListEventRules() {
+    const shareableListEventRuleProps: PocketEventBridgeProps = {
       eventRule: {
-        name: `${config.prefix}-${eventConfig.name}-Rule`,
+        name: `${config.prefix}-${eventConfig.shareableListItem.name}-Rule`,
         eventPattern: {
-          source: [eventConfig.source],
-          'detail-type': eventConfig.detailType,
+          source: [eventConfig.shareableListItem.source],
+          'detail-type': eventConfig.shareableListItem.detailType,
         },
         eventBusName: this.sharedEventBus.bus.name,
         preventDestroy: true,
@@ -82,15 +82,15 @@ export class ShareableListsApiEvents extends Resource {
         {
           arn: this.snsTopic.arn,
           deadLetterArn: this.snsTopicDlq.arn,
-          targetId: `${config.prefix}-Shareable-Lists-Api-Event-SNS-Target`,
+          targetId: `${config.prefix}-Shareable-List-Item-Event-SNS-Target`,
           terraformResource: this.snsTopic,
         },
       ],
     };
     return new PocketEventBridgeRuleWithMultipleTargets(
       this,
-      `${config.prefix}-Shareable-Lists-Api-EventBridge-Rule`,
-      slapiEventRuleProps
+      `${config.prefix}-Shareable-List-Item-EventBridge-Rule`,
+      shareableListEventRuleProps
     );
   }
 
@@ -117,7 +117,7 @@ export class ShareableListsApiEvents extends Resource {
 
     return new sns.SnsTopicPolicy(
       this,
-      'shareable-lists-api-events-sns-topic-policy',
+      'shareable-list-item-events-sns-topic-policy',
       {
         arn: this.snsTopic.arn,
         policy: eventBridgeSnsPolicy,

@@ -16,7 +16,8 @@ import {
 import { UserApiEvents } from './event-rules/user-api-events/userApiEventRules';
 import { ProspectEvents } from './event-rules/prospect-events/prospectEventRules';
 import { CollectionApiEvents } from './event-rules/collection-events/collectionApiEventRules';
-import { ShareableListsApiEvents } from './event-rules/shareable-lists-api-events/shareableListsApiEventRules';
+import { ShareableListEvents } from './event-rules/shareable-lists-api-events/shareableListEventRules';
+import { ShareableListItemEvents } from './event-rules/shareable-lists-api-events/shareableListItemEventRules';
 import { PocketPagerDuty, PocketVPC } from '@pocket-tools/terraform-modules';
 import { ArchiveProvider } from '@cdktf/provider-archive';
 import { config } from './config';
@@ -101,10 +102,18 @@ class PocketEventBus extends TerraformStack {
     );
     //TODO add collection events open api schema from aws
 
-    // Events for Shareable Lists API service
-    new ShareableListsApiEvents(
+    // Shareable List Events for Shareable Lists API service
+    new ShareableListEvents(
       this,
-      'shareable-lists-api-events',
+      'shareable-list-events',
+      sharedPocketEventBus,
+      pagerDuty
+    );
+
+    // Shareable List Item Events for Shareable Lists API service
+    new ShareableListItemEvents(
+      this,
+      'shareable-list-item-events',
       sharedPocketEventBus,
       pagerDuty
     );
