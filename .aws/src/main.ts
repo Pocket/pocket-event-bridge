@@ -28,6 +28,7 @@ import { UserMergeEventSchema } from './events-schema/userMergeEvent';
 import { PremiumPurchaseEvent } from './events-schema/premiumPurchaseEvent';
 import { ForgotPasswordRequestEvent } from './events-schema/ForgotPasswordRequestEvent';
 import { PremiumPurchase } from './event-rules/premium-purchase';
+import { UserRegistrationEventRule } from './event-rules/user-registration/userRegistrationEventRule';
 
 class PocketEventBus extends TerraformStack {
   constructor(scope: Construct, name: string) {
@@ -83,6 +84,9 @@ class PocketEventBus extends TerraformStack {
 
     //'Premium Purchase' event, currently emitted by web-repo
     new PremiumPurchase(this, 'premium-purchase', pagerDuty);
+
+    //'User Registration' event, currently emitted by web-repo
+    new UserRegistrationEventRule(this, 'user-registration', pagerDuty);
 
     //Schema
     new UserEventsSchema(this, 'user-api-events-schema');
