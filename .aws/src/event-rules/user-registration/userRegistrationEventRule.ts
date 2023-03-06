@@ -31,7 +31,7 @@ export class UserRegistrationEventRule extends Resource {
     });
 
     this.snsTopicDlq = new sqs.SqsQueue(this, 'sns-topic-dql', {
-      name: `${config.prefix}-SNS-Topic-Event-Rule-DLQ`,
+      name: `${config.prefix}-SNS-${eventConfig.name}-Topic--DLQ`,
       tags: config.tags,
     });
 

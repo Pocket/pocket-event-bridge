@@ -32,7 +32,7 @@ export class CollectionApiEvents extends Resource {
     });
 
     this.snsTopicDlq = new sqs.SqsQueue(this, 'sns-topic-dql', {
-      name: `${config.prefix}-SNS-Topic-Event-Rule-DLQ`,
+      name: `${config.prefix}-SNS-${eventConfig.name}-Event-Rule-DLQ`,
       tags: config.tags,
     });
 
