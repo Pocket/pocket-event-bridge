@@ -12,44 +12,33 @@ import { eventConfig } from './eventConfig';
 import { createDeadLetterQueueAlarm } from '../utils';
 import * as NullProviders from '@cdktf/provider-null';
 
-export class CollectionApiEvents extends Resource {
+export class UserRegistrationEventRule extends Resource {
   public readonly snsTopic: sns.SnsTopic;
   public readonly snsTopicDlq: sqs.SqsQueue;
 
   constructor(
     scope: Construct,
     private name: string,
-    private sharedEventBus: ApplicationEventBus,
     private pagerDuty: PocketPagerDuty
   ) {
     super(scope, name);
 
-    this.snsTopic = new sns.SnsTopic(this, 'collection-event-topic', {
-      name: `${config.prefix}-CollectionEventTopic`,
+    this.snsTopic = new sns.SnsTopic(this, 'user-registration-topic', {
+      name: `${config.prefix}-UserRegistrationTopic`,
       lifecycle: {
         preventDestroy: true,
       },
     });
 
     this.snsTopicDlq = new sqs.SqsQueue(this, 'sns-topic-dql', {
-      name: `${config.prefix}-SNS-${eventConfig.name}-Event-Rule-DLQ`,
+      name: `${config.prefix}-SNS-${eventConfig.name}-Topic--DLQ`,
       tags: config.tags,
     });
 
-    const collectionEvent = this.createCollectionEventRules();
+    const userRegistrationEvent = this.createUserRegistrationEventRules();
     this.createPolicyForEventBridgeToSns();
 
-    //get alerted if we get 10 messages in DLQ in 4 evaluation period of 5 minutes
-    createDeadLetterQueueAlarm(
-      this,
-      pagerDuty,
-      this.snsTopicDlq.name,
-      `${eventConfig.name}-Rule-dlq-alarm`,
-      true,
-      4,
-      300,
-      10
-    );
+    //todo: set DLQ alert after the chores ticket
 
     //place-holder resource used to make sure we are not
     //removing the event-rule or the SNS by mistake
@@ -58,39 +47,39 @@ export class CollectionApiEvents extends Resource {
     //e.g removing any of the dependsOn resource and running npm build would
     //throw error
     new NullProviders.Resource(this, 'null-resource', {
-      dependsOn: [collectionEvent.getEventBridge().rule, this.snsTopic],
+      dependsOn: [userRegistrationEvent.getEventBridge().rule, this.snsTopic],
     });
   }
 
   /**
    * Rolls out event bridge rule and attaches them to sns target
-   * for collection-events
+   * for user-registration-events
    * @private
    */
-  private createCollectionEventRules() {
-    const collectionEventRuleProps: PocketEventBridgeProps = {
+  private createUserRegistrationEventRules() {
+    const userRegistrationEventRuleProps: PocketEventBridgeProps = {
       eventRule: {
         name: `${config.prefix}-${eventConfig.name}-Rule`,
         eventPattern: {
           source: [eventConfig.source],
           'detail-type': eventConfig.detailType,
         },
-        eventBusName: this.sharedEventBus.bus.name,
+        eventBusName: eventConfig.bus,
         preventDestroy: true,
       },
       targets: [
         {
           arn: this.snsTopic.arn,
           deadLetterArn: this.snsTopicDlq.arn,
-          targetId: `${config.prefix}-Collection-Event-SNS-Target`,
+          targetId: `${config.prefix}-User-Registration-Event-SNS-Target`,
           terraformResource: this.snsTopic,
         },
       ],
     };
     return new PocketEventBridgeRuleWithMultipleTargets(
       this,
-      `${config.prefix}-Collection-Api-EventBridge-Rule`,
-      collectionEventRuleProps
+      `${config.prefix}-User-Registration-EventBridge-Rule`,
+      userRegistrationEventRuleProps
     );
   }
 
@@ -115,9 +104,13 @@ export class CollectionApiEvents extends Resource {
       }
     ).json;
 
-    return new sns.SnsTopicPolicy(this, 'collection-events-sns-topic-policy', {
-      arn: this.snsTopic.arn,
-      policy: eventBridgeSnsPolicy,
-    });
+    return new sns.SnsTopicPolicy(
+      this,
+      'user-registration-events-sns-topic-policy',
+      {
+        arn: this.snsTopic.arn,
+        policy: eventBridgeSnsPolicy,
+      }
+    );
   }
 }
