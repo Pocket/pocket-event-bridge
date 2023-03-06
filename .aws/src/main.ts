@@ -29,6 +29,7 @@ import { PremiumPurchaseEvent } from './events-schema/premiumPurchaseEvent';
 import { ForgotPasswordRequestEvent } from './events-schema/ForgotPasswordRequestEvent';
 import { PremiumPurchase } from './event-rules/premium-purchase';
 import { UserRegistrationEventRule } from './event-rules/user-registration/userRegistrationEventRule';
+import { UserRegistrationEventSchema } from './events-schema/userRegistrationEventSchema';
 
 class PocketEventBus extends TerraformStack {
   constructor(scope: Construct, name: string) {
@@ -88,16 +89,6 @@ class PocketEventBus extends TerraformStack {
     //'User Registration' event, currently emitted by web-repo
     new UserRegistrationEventRule(this, 'user-registration', pagerDuty);
 
-    //Schema
-    new UserEventsSchema(this, 'user-api-events-schema');
-    new QueueCheckDeleteSchema(this, 'queue-delete-schema');
-    new UserMergeEventSchema(this, 'user-merge-event-shema');
-    new PremiumPurchaseEvent(this, 'premium-purchase-event-schema');
-    new ForgotPasswordRequestEvent(
-      this,
-      'forgot-password-request-event-schema'
-    );
-
     new CollectionApiEvents(
       this,
       'collection-events',
@@ -121,6 +112,17 @@ class PocketEventBus extends TerraformStack {
       sharedPocketEventBus,
       pagerDuty
     );
+
+    //Schema
+    new UserEventsSchema(this, 'user-api-events-schema');
+    new QueueCheckDeleteSchema(this, 'queue-delete-schema');
+    new UserMergeEventSchema(this, 'user-merge-event-shema');
+    new PremiumPurchaseEvent(this, 'premium-purchase-event-schema');
+    new ForgotPasswordRequestEvent(
+      this,
+      'forgot-password-request-event-schema'
+    );
+    new UserRegistrationEventSchema(this, `user-registration-event-schema`);
   }
 
   /**
