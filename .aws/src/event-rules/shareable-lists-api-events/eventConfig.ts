@@ -7,6 +7,7 @@ export const eventConfig = {
       'shareable_list_updated',
       'shareable_list_deleted',
       'shareable_list_hidden',
+      'shareable_list_unhidden',
       'shareable_list_published',
       'shareable_list_unpublished',
     ],
@@ -14,6 +15,10 @@ export const eventConfig = {
   shareableListItem: {
     name: 'ShareableListItemEvents',
     source: 'shareable-list-item-events',
-    detailType: ['shareable_list_item_created', 'shareable_list_item_deleted'],
+    detailType: [
+      'shareable_list_item_created',
+      'shareable_list_item_updated',
+      'shareable_list_item_deleted',
+    ],
   },
 };
