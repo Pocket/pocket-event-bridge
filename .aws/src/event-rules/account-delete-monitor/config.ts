@@ -5,6 +5,7 @@ export const config = {
     scheduleExpression: 'cron(15 10 * * ? *)', // 03:15 PT every day
     name: 'EventTracker',
     schema: 'queue-check-delete',
+    //scheduled events are supported by default bus only.
     bus: 'default',
   },
   userMerge: {
@@ -14,7 +15,7 @@ export const config = {
     //todo: swap after replaying events.
     source: 'user-merge',
     detailType: ['web-repo'],
-    bus: `default`, //todo: change it to shared-event-bridge after changing in web-repo
+    bus: globalConfig.sharedEventBusName,
   },
   prefix: `AccountDeleteMonitor-${globalConfig.environment}`,
 };
