@@ -14,7 +14,7 @@ export const config = {
     //todo: swap after replaying events.
     source: 'user-merge',
     detailType: ['web-repo'],
-    bus: `default`, //todo: change it to shared-event-bridge after changing in web-repo
+    bus: globalConfig.sharedEventBusName,
   },
   prefix: `AccountDeleteMonitor-${globalConfig.environment}`,
 };
