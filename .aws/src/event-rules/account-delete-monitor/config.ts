@@ -5,6 +5,7 @@ export const config = {
     scheduleExpression: 'cron(15 10 * * ? *)', // 03:15 PT every day
     name: 'EventTracker',
     schema: 'queue-check-delete',
+    //scheduled events are supported by default bus only.
     bus: 'default',
   },
   userMerge: {
