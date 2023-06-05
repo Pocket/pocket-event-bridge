@@ -106,7 +106,7 @@ export class AccountDeleteMonitorEvents extends Resource {
           'detail-type': admConfig.userMerge.detailType,
         },
         eventBusName: admConfig.userMerge.bus,
-        preventDestroy: false,
+        preventDestroy: true,
       },
       targets: [
         {
