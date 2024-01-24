@@ -1,5 +1,8 @@
 # PocketEventBridge
 
+> [!IMPORTANT]  
+> This repo has been moved to [Pocket's Monorepo](https://github.com/Pocket/pocket-monorepo)
+
 repository that contains pocket shared event bus, and the event-rules associated with it
 
 ## Folder structure
